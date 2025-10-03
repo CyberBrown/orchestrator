@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Workflow Definition Schema",
+  "description": "JSON Schema for validating workflow configuration files",
+  "type": "object",
+  "required": ["id", "name", "steps"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the workflow",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable name for the workflow"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of what this workflow does"
+    },
+    "steps": {
+      "type": "array",
+      "description": "Ordered list of steps to execute",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["stepId", "actionName"],
+        "properties": {
+          "stepId": {
+            "type": "string",
+            "description": "Unique identifier for this step",
+            "pattern": "^[a-z0-9-]+$"
+          },
+          "actionName": {
+            "type": "string",
+            "description": "Name of the action to execute"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable name for UI display"
+          },
+          "dependencies": {
+            "type": "array",
+            "description": "Step IDs that must complete before this step",
+            "items": {
+              "type": "string"
+            }
+          },
+          "config": {
+            "type": "object",
+            "description": "Configuration specific to this step"
+          },
+          "requiresHumanReview": {
+            "type": "boolean",
+            "description": "Whether this step requires human review",
+            "default": false
+          },
+          "maxRetries": {
+            "type": "integer",
+            "description": "Maximum retry attempts for this step",
+            "minimum": 0,
+            "default": 3
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "Timeout in milliseconds",
+            "minimum": 1000
+          }
+        }
+      }
+    },
+    "errorHandler": {
+      "type": "string",
+      "description": "Step ID to execute on error"
+    },
+    "successHandler": {
+      "type": "string",
+      "description": "Step ID to execute on success"
+    },
+    "deadLetterHandler": {
+      "type": "string",
+      "description": "Step ID for unrecoverable failures"
+    },
+    "fallbackMap": {
+      "type": "object",
+      "description": "Fallback step mappings",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "config": {
+      "type": "object",
+      "description": "Global workflow configuration",
+      "properties": {
+        "maxExecutionTime": {
+          "type": "integer",
+          "description": "Maximum total execution time in milliseconds",
+          "minimum": 1000
+        },
+        "persistState": {
+          "type": "boolean",
+          "description": "Whether to persist state after each step",
+          "default": false
+        }
+      }
+    }
+  }
+}

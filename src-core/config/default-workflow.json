@@ -1,0 +1,47 @@
+{
+  "id": "default-workflow",
+  "name": "Default Three-Step Workflow",
+  "description": "A simple three-step workflow demonstrating the framework capabilities",
+  "steps": [
+    {
+      "stepId": "step-1-fetch",
+      "actionName": "data-fetch",
+      "displayName": "Fetch Input Data",
+      "config": {
+        "table": "input_data",
+        "filters": {}
+      },
+      "maxRetries": 3,
+      "timeout": 30000
+    },
+    {
+      "stepId": "step-2-process",
+      "actionName": "ai-generation",
+      "displayName": "Process with AI",
+      "dependencies": ["step-1-fetch"],
+      "config": {
+        "temperature": 0.7,
+        "maxTokens": 1000
+      },
+      "maxRetries": 3,
+      "timeout": 60000
+    },
+    {
+      "stepId": "step-3-save",
+      "actionName": "data-transform",
+      "displayName": "Save Results",
+      "dependencies": ["step-2-process"],
+      "config": {
+        "sourceStepId": "step-2-process"
+      },
+      "maxRetries": 2,
+      "timeout": 30000
+    }
+  ],
+  "errorHandler": "error-handler",
+  "successHandler": "success-handler",
+  "config": {
+    "maxExecutionTime": 300000,
+    "persistState": true
+  }
+}

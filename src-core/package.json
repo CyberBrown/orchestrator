@@ -1,0 +1,58 @@
+{
+  "name": "@llm-orchestration/core",
+  "version": "1.0.0",
+  "description": "Generalized LLM Orchestration Framework - A modular, configuration-driven framework for building multi-step AI workflows",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write &quot;**/*.ts&quot;",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "llm",
+    "orchestration",
+    "workflow",
+    "ai",
+    "typescript",
+    "framework",
+    "vertex-ai",
+    "openai",
+    "supabase"
+  ],
+  "author": "Your Organization",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/llm-orchestration-framework.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/llm-orchestration-framework/issues"
+  },
+  "homepage": "https://github.com/your-org/llm-orchestration-framework#readme",
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0"
+  },
+  "optionalDependencies": {
+    "@google-cloud/vertexai": "^1.0.0",
+    "@supabase/supabase-js": "^2.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
