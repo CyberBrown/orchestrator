@@ -14,6 +14,7 @@ import type {
   WorkflowHistoryEntry,
   RetryState,
   StepExecutionResult,
+  WorkflowStep,
 } from "../types/workflow";
 import type { ActionRegistry } from "../types/action";
 import type { DataClient } from "../types/providers";
@@ -24,8 +25,8 @@ import type { DataClient } from "../types/providers";
 export interface OrchestrationResult<TData = Record<string, unknown>> {
   /** Next action to take */
   nextAction: {
-    /** Step ID to execute */
-    stepId?: string;
+    /** Step IDs to execute */
+    stepIds?: string[];
 
     /** Special action (WAIT, TERMINATE, etc.) */
     action?: "WAIT" | "TERMINATE" | "RETRY" | "ERROR";
@@ -76,19 +77,6 @@ const TERMINAL_STATUSES = new Set<WorkflowStatus>([
 ]);
 
 /**
- * Statuses that should be logged to history
- */
-const LOGGABLE_STATUSES = new Set<WorkflowStatus>([
-  "success",
-  "failed",
-  "timed_out",
-  "retrying",
-  "paused",
-  "canceled",
-  "validation_failed",
-]);
-
-/**
  * Core Orchestrator class
  */
 export class Orchestrator<TData = Record<string, unknown>> {
@@ -115,6 +103,7 @@ export class Orchestrator<TData = Record<string, unknown>> {
     const currentState: WorkflowState<TData> = {
       ...state,
       history: [...state.history],
+      runningStepIds: [...state.runningStepIds],
       context: {
         ...state.context,
         outputs: { ...state.context.outputs },
@@ -122,43 +111,26 @@ export class Orchestrator<TData = Record<string, unknown>> {
       },
     };
 
-    // Log status changes to history
-    if (LOGGABLE_STATUSES.has(currentState.status)) {
-      this.appendHistory(currentState, currentState.status);
-    }
-
     // Handle different workflow states
     switch (currentState.status) {
       case "paused":
         return this.handlePaused(currentState);
-
       case "canceled":
         return this.handleCanceled(currentState);
-
-      case "retrying":
-        return this.handleRetrying(currentState, workflow);
-
-      case "validation_failed":
-        return this.handleValidationFailed(currentState, workflow);
-
       case "pending_human_review":
         return this.handleHumanReview(currentState);
-
       case "in_progress":
         return this.handleInProgress(currentState);
-
       case "failed":
       case "timed_out":
         return this.handleFailure(currentState, workflow);
-
       case "success":
         return this.handleSuccess(currentState, workflow);
-
       case "pending":
         return this.handlePending(currentState, workflow);
-
       default:
-        return this.handleUnknownStatus(currentState, workflow);
+        // For retrying, validation_failed, etc. we simplify for now
+        return this.handleFailure(currentState, workflow);
     }
   }
 
@@ -195,13 +167,11 @@ export class Orchestrator<TData = Record<string, unknown>> {
     }
 
     try {
-      // Validate input if action supports it
       if (action.validate) {
         const validation = await action.validate({
           context: state.context,
           config: step.config,
         });
-
         if (!validation.valid) {
           return {
             success: false,
@@ -213,21 +183,16 @@ export class Orchestrator<TData = Record<string, unknown>> {
           };
         }
       }
-
-      // Execute the action
-      const result = await action.execute({
+      return await action.execute({
         context: state.context,
         config: step.config,
       });
-
-      return result;
     } catch (error) {
       this.logger?.error("Step execution failed", {
         stepId,
         actionName: step.actionName,
         error: error instanceof Error ? error.message : String(error),
       });
-
       return {
         success: false,
         error: {
@@ -240,23 +205,22 @@ export class Orchestrator<TData = Record<string, unknown>> {
   }
 
   /**
-   * Persist workflow state if enabled
+   * Appends an entry to the workflow's history.
+   * This should be called by the runner after a step completes or fails.
    */
-  private async persistStateIfEnabled(
+  public appendHistory(
     state: WorkflowState<TData>,
-  ): Promise<void> {
-    if (!this.persistState || !this.dataClient) {
-      return;
-    }
-
-    try {
-      await this.dataClient.update("workflow_states", state.workflowId, state);
-    } catch (error) {
-      this.logger?.error("Failed to persist state", {
-        workflowId: state.workflowId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    stepId: string,
+    status: WorkflowStatus,
+    notes?: Record<string, unknown>,
+  ): void {
+    const entry: WorkflowHistoryEntry = {
+      stepId,
+      status,
+      timestamp: new Date().toISOString(),
+      ...(notes ? { notes } : {}),
+    };
+    state.history.push(entry);
   }
 
   // State handlers
@@ -264,352 +228,153 @@ export class Orchestrator<TData = Record<string, unknown>> {
   private handlePaused(
     state: WorkflowState<TData>,
   ): OrchestrationResult<TData> {
-    return {
-      nextAction: { action: "WAIT" },
-      updatedState: state,
-    };
+    return { nextAction: { action: "WAIT" }, updatedState: state };
   }
 
   private handleCanceled(
     state: WorkflowState<TData>,
   ): OrchestrationResult<TData> {
-    return {
-      nextAction: { action: "TERMINATE" },
-      updatedState: state,
-    };
-  }
-
-  private handleRetrying(
-    state: WorkflowState<TData>,
-    workflow: WorkflowDefinition,
-  ): OrchestrationResult<TData> {
-    const nextStepId =
-      state.currentStepId ?? this.getFirstStep(workflow)?.stepId;
-
-    return {
-      nextAction: {
-        stepId: nextStepId,
-        metadata: { reason: "retry" },
-      },
-      updatedState: {
-        ...state,
-        status: "in_progress",
-      },
-    };
-  }
-
-  private handleValidationFailed(
-    state: WorkflowState<TData>,
-    workflow: WorkflowDefinition,
-  ): OrchestrationResult<TData> {
-    const instructions =
-      state.lastError?.validationMessage ??
-      "Previous output was invalid. Please regenerate following the required schema.";
-
-    return {
-      nextAction: {
-        stepId: state.currentStepId ?? this.getFirstStep(workflow)?.stepId,
-        instructions,
-        metadata: { reason: "validation_failed" },
-      },
-      updatedState: {
-        ...state,
-        status: "in_progress",
-      },
-    };
+    return { nextAction: { action: "TERMINATE" }, updatedState: state };
   }
 
   private handleHumanReview(
     state: WorkflowState<TData>,
   ): OrchestrationResult<TData> {
-    return {
-      nextAction: { action: "WAIT" },
-      updatedState: state,
-    };
+    return { nextAction: { action: "WAIT" }, updatedState: state };
   }
 
   private handleInProgress(
     state: WorkflowState<TData>,
   ): OrchestrationResult<TData> {
-    return {
-      nextAction: { action: "WAIT" },
-      updatedState: state,
-    };
+    // If in progress, it means we are waiting for running steps to complete.
+    return { nextAction: { action: "WAIT" }, updatedState: state };
   }
 
   private handleFailure(
     state: WorkflowState<TData>,
     workflow: WorkflowDefinition,
   ): OrchestrationResult<TData> {
-    // Check if we should retry
-    if (this.shouldRetry(state, workflow)) {
-      const { delayMs, retryState } = this.calculateBackoff(state);
-
-      return {
-        nextAction: {
-          stepId: state.currentStepId ?? this.getFirstStep(workflow)?.stepId,
-          delayMs,
-          metadata: { reason: "automatic_retry", attempt: retryState.attempt },
-        },
-        updatedState: {
-          ...state,
-          status: "in_progress",
-          retryState,
-        },
-      };
-    }
-
-    // Check for fallback
-    const fallbackStepId = this.resolveFallback(state, workflow);
-    if (fallbackStepId) {
-      return {
-        nextAction: {
-          stepId: fallbackStepId,
-          metadata: { reason: "fallback_route" },
-        },
-        updatedState: {
-          ...state,
-          currentStepId: fallbackStepId,
-          status: "in_progress",
-          retryState: undefined,
-        },
-      };
-    }
-
-    // Use error handler
+    // Simplified failure handling for now. No complex retry/fallback for parallel execution.
     const errorHandlerStepId =
       workflow.deadLetterHandler ?? workflow.errorHandler;
     if (errorHandlerStepId) {
       return {
-        nextAction: {
-          stepId: errorHandlerStepId,
-          metadata: { reason: state.status },
-        },
-        updatedState: {
-          ...state,
-          currentStepId: errorHandlerStepId,
-        },
+        nextAction: { stepIds: [errorHandlerStepId] },
+        updatedState: { ...state, runningStepIds: [errorHandlerStepId] },
       };
     }
-
-    // No recovery possible
-    return {
-      nextAction: { action: "TERMINATE" },
-      updatedState: state,
-    };
+    return { nextAction: { action: "TERMINATE" }, updatedState: state };
   }
 
   private handleSuccess(
     state: WorkflowState<TData>,
     workflow: WorkflowDefinition,
   ): OrchestrationResult<TData> {
-    // If we're at the success handler, terminate
-    if (state.currentStepId === workflow.successHandler) {
+    const runnableSteps = this.findRunnableSteps(workflow, state);
+
+    if (runnableSteps.length > 0) {
+      return {
+        nextAction: { stepIds: runnableSteps },
+        updatedState: {
+          ...state,
+          runningStepIds: runnableSteps,
+          status: "in_progress",
+        },
+      };
+    }
+
+    const allStepsFinished = workflow.steps.every((step) =>
+      state.history.some(
+        (h) => h.stepId === step.stepId && h.status === "success",
+      ),
+    );
+
+    if (allStepsFinished) {
+      if (workflow.successHandler) {
+        return {
+          nextAction: { stepIds: [workflow.successHandler] },
+          updatedState: { ...state, runningStepIds: [workflow.successHandler] },
+        };
+      }
       return {
         nextAction: { action: "TERMINATE" },
         updatedState: {
           ...state,
+          status: "success",
+          runningStepIds: [],
           completedAt: new Date().toISOString(),
         },
       };
     }
 
-    // Find next step
-    const nextStep = this.findNextStep(workflow, state.currentStepId);
-
-    if (!nextStep) {
-      // No more steps, go to success handler
-      const successHandlerStepId = workflow.successHandler;
-
-      if (!successHandlerStepId) {
-        // No success handler, just terminate
-        return {
-          nextAction: { action: "TERMINATE" },
-          updatedState: {
-            ...state,
-            completedAt: new Date().toISOString(),
-          },
-        };
-      }
-
-      return {
-        nextAction: { stepId: successHandlerStepId },
-        updatedState: {
-          ...state,
-          currentStepId: successHandlerStepId,
-        },
-      };
-    }
-
-    // Check if next step requires human review
-    const requiresReview = nextStep.requiresHumanReview ?? false;
-
-    return {
-      nextAction: requiresReview
-        ? { action: "WAIT" }
-        : { stepId: nextStep.stepId },
-      updatedState: {
-        ...state,
-        currentStepId: nextStep.stepId,
-        status: requiresReview ? "pending_human_review" : "in_progress",
-      },
-    };
+    // If there are no more runnable steps but the workflow is not complete,
+    // it could be a deadlock or waiting for external input.
+    return { nextAction: { action: "WAIT" }, updatedState: state };
   }
 
   private handlePending(
     state: WorkflowState<TData>,
     workflow: WorkflowDefinition,
   ): OrchestrationResult<TData> {
-    const firstStep = this.getFirstStep(workflow);
-
-    if (!firstStep) {
+    const runnableSteps = this.findRunnableSteps(workflow, state);
+    if (runnableSteps.length === 0) {
       return {
         nextAction: { action: "TERMINATE" },
         updatedState: {
           ...state,
           status: "failed",
           lastError: {
-            message: "No steps defined in workflow",
+            message: "No initial steps found in workflow",
             type: "CONFIGURATION_ERROR",
-            retryable: false,
           },
         },
       };
     }
 
     return {
-      nextAction: { stepId: firstStep.stepId },
+      nextAction: { stepIds: runnableSteps },
       updatedState: {
         ...state,
-        currentStepId: firstStep.stepId,
+        runningStepIds: runnableSteps,
         status: "in_progress",
         startedAt: new Date().toISOString(),
       },
     };
   }
 
-  private handleUnknownStatus(
-    state: WorkflowState<TData>,
+  /**
+   * Finds all steps that are ready to be executed based on their dependencies.
+   */
+  private findRunnableSteps(
     workflow: WorkflowDefinition,
-  ): OrchestrationResult<TData> {
-    const errorHandlerStepId =
-      workflow.deadLetterHandler ?? workflow.errorHandler;
-
-    if (errorHandlerStepId) {
-      return {
-        nextAction: {
-          stepId: errorHandlerStepId,
-          metadata: { reason: "unknown_status", status: state.status },
-        },
-        updatedState: {
-          ...state,
-          currentStepId: errorHandlerStepId,
-        },
-      };
-    }
-
-    return {
-      nextAction: { action: "TERMINATE" },
-      updatedState: state,
-    };
-  }
-
-  // Helper methods
-
-  private appendHistory(
     state: WorkflowState<TData>,
-    status: WorkflowStatus,
-    notes?: Record<string, unknown>,
-  ): void {
-    if (!state.currentStepId) return;
-
-    const entry: WorkflowHistoryEntry = {
-      stepId: state.currentStepId,
-      status,
-      timestamp: new Date().toISOString(),
-      ...(notes ? { notes } : {}),
-    };
-
-    // Avoid duplicate entries
-    const lastEntry = state.history[state.history.length - 1];
-    if (
-      lastEntry &&
-      lastEntry.stepId === entry.stepId &&
-      lastEntry.status === entry.status
-    ) {
-      return;
-    }
-
-    state.history.push(entry);
-  }
-
-  private getFirstStep(workflow: WorkflowDefinition) {
-    return workflow.steps[0] ?? null;
-  }
-
-  private findNextStep(
-    workflow: WorkflowDefinition,
-    currentStepId: string | null,
-  ) {
-    if (!currentStepId) return this.getFirstStep(workflow);
-
-    const currentIndex = workflow.steps.findIndex(
-      (s) => s.stepId === currentStepId,
+  ): string[] {
+    const completedStepIds = new Set(
+      state.history
+        .filter((h) => h.status === "success")
+        .map((h) => h.stepId),
     );
-    if (currentIndex === -1) return null;
+    const runningStepIds = new Set(state.runningStepIds);
 
-    return workflow.steps[currentIndex + 1] ?? null;
-  }
+    const runnableSteps: string[] = [];
 
-  private shouldRetry(
-    state: WorkflowState<TData>,
-    workflow: WorkflowDefinition,
-  ): boolean {
-    if (!state.currentStepId) return false;
+    for (const step of workflow.steps) {
+      if (
+        completedStepIds.has(step.stepId) ||
+        runningStepIds.has(step.stepId)
+      ) {
+        continue;
+      }
 
-    const step = workflow.steps.find((s) => s.stepId === state.currentStepId);
-    if (!step) return false;
+      const dependencies = step.dependencies ?? [];
+      const dependenciesMet = dependencies.every((depId) =>
+        completedStepIds.has(depId),
+      );
 
-    const retryable = state.lastError?.retryable ?? true;
-    if (!retryable) return false;
-
-    const maxAttempts = step.maxRetries ?? 3;
-    const attempts = state.retryState?.attempt ?? 0;
-
-    return attempts < maxAttempts;
-  }
-
-  private calculateBackoff(state: WorkflowState<TData>): {
-    delayMs: number;
-    retryState: RetryState;
-  } {
-    const retryState = state.retryState ?? {
-      attempt: 0,
-      maxAttempts: 3,
-      baseDelayMs: 2000,
-    };
-
-    const attempt = retryState.attempt + 1;
-    const delayMs = retryState.baseDelayMs * Math.pow(2, attempt - 1);
-    const now = new Date().toISOString();
-    const nextRetryAt = new Date(Date.now() + delayMs).toISOString();
-
-    return {
-      delayMs,
-      retryState: {
-        ...retryState,
-        attempt,
-        lastAttemptAt: now,
-        nextRetryAt,
-      },
-    };
-  }
-
-  private resolveFallback(
-    state: WorkflowState<TData>,
-    workflow: WorkflowDefinition,
-  ): string | null {
-    if (!state.currentStepId) return null;
-    return workflow.fallbackMap?.[state.currentStepId] ?? null;
+      if (dependenciesMet) {
+        runnableSteps.push(step.stepId);
+      }
+    }
+    return runnableSteps;
   }
 }

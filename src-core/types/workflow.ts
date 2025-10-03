@@ -127,8 +127,8 @@ export interface WorkflowState<TData = Record<string, unknown>> {
   /** Current execution status */
   status: WorkflowStatus;
 
-  /** ID of the currently executing step */
-  currentStepId: string | null;
+  /** IDs of the currently executing steps */
+  runningStepIds: string[];
 
   /** Execution history */
   history: WorkflowHistoryEntry[];
