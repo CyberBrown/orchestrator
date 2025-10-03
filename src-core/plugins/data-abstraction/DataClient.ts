@@ -1,6 +1,6 @@
 /**
  * DataClient Interface
- * 
+ *
  * Base interface for data persistence implementations.
  * Allows the framework to work with any database (Supabase, MongoDB, PostgreSQL, etc.)
  */
@@ -9,7 +9,7 @@ import type {
   DataClient as IDataClient,
   DataQuery,
   DataResult,
-} from '../../types/providers';
+} from "../../types/providers";
 
 /**
  * Abstract base class for data clients
@@ -20,7 +20,7 @@ export abstract class DataClient implements IDataClient {
    */
   abstract fetch<T = unknown>(
     table: string,
-    query?: DataQuery
+    query?: DataQuery,
   ): Promise<DataResult<T[]>>;
 
   /**
@@ -28,7 +28,7 @@ export abstract class DataClient implements IDataClient {
    */
   abstract fetchById<T = unknown>(
     table: string,
-    id: string | number
+    id: string | number,
   ): Promise<DataResult<T>>;
 
   /**
@@ -36,7 +36,7 @@ export abstract class DataClient implements IDataClient {
    */
   abstract insert<T = unknown>(
     table: string,
-    data: Partial<T> | Partial<T>[]
+    data: Partial<T> | Partial<T>[],
   ): Promise<DataResult<T | T[]>>;
 
   /**
@@ -45,7 +45,7 @@ export abstract class DataClient implements IDataClient {
   abstract update<T = unknown>(
     table: string,
     id: string | number,
-    data: Partial<T>
+    data: Partial<T>,
   ): Promise<DataResult<T>>;
 
   /**
@@ -53,7 +53,7 @@ export abstract class DataClient implements IDataClient {
    */
   abstract delete(
     table: string,
-    id: string | number
+    id: string | number,
   ): Promise<DataResult<void>>;
 
   /**
@@ -71,7 +71,7 @@ export abstract class DataClient implements IDataClient {
    */
   protected createSuccessResult<T>(
     data: T,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): DataResult<T> {
     return {
       success: true,
@@ -85,10 +85,10 @@ export abstract class DataClient implements IDataClient {
    */
   protected createErrorResult<T = unknown>(
     error: Error | unknown,
-    code?: string
+    code?: string,
   ): DataResult<T> {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    
+
     return {
       success: false,
       error: {
@@ -104,12 +104,14 @@ export abstract class DataClient implements IDataClient {
    */
   protected validateTableName(table: string): void {
     if (!table || table.trim().length === 0) {
-      throw new Error('Table name is required');
+      throw new Error("Table name is required");
     }
 
     // Basic SQL injection prevention
     if (!/^[a-zA-Z0-9_]+$/.test(table)) {
-      throw new Error('Invalid table name. Only alphanumeric characters and underscores are allowed.');
+      throw new Error(
+        "Invalid table name. Only alphanumeric characters and underscores are allowed.",
+      );
     }
   }
 
@@ -118,11 +120,11 @@ export abstract class DataClient implements IDataClient {
    */
   protected validateId(id: string | number): void {
     if (id === null || id === undefined) {
-      throw new Error('ID is required');
+      throw new Error("ID is required");
     }
 
-    if (typeof id === 'string' && id.trim().length === 0) {
-      throw new Error('ID cannot be empty');
+    if (typeof id === "string" && id.trim().length === 0) {
+      throw new Error("ID cannot be empty");
     }
   }
 
@@ -155,7 +157,7 @@ export abstract class DataClient implements IDataClient {
    */
   protected applySorting(query?: DataQuery): Array<{
     field: string;
-    direction: 'asc' | 'desc';
+    direction: "asc" | "desc";
   }> {
     return query?.orderBy ?? [];
   }
@@ -169,7 +171,7 @@ export class MockDataClient extends DataClient {
 
   async fetch<T = unknown>(
     table: string,
-    query?: DataQuery
+    query?: DataQuery,
   ): Promise<DataResult<T[]>> {
     try {
       this.validateTableName(table);
@@ -183,7 +185,7 @@ export class MockDataClient extends DataClient {
 
       // Apply filters
       if (query?.filters) {
-        results = results.filter(item => {
+        results = results.filter((item) => {
           return Object.entries(query.filters!).every(([key, value]) => {
             return (item as any)[key] === value;
           });
@@ -196,9 +198,9 @@ export class MockDataClient extends DataClient {
           for (const sort of query.orderBy!) {
             const aVal = (a as any)[sort.field];
             const bVal = (b as any)[sort.field];
-            
-            if (aVal < bVal) return sort.direction === 'asc' ? -1 : 1;
-            if (aVal > bVal) return sort.direction === 'asc' ? 1 : -1;
+
+            if (aVal < bVal) return sort.direction === "asc" ? -1 : 1;
+            if (aVal > bVal) return sort.direction === "asc" ? 1 : -1;
           }
           return 0;
         });
@@ -224,7 +226,7 @@ export class MockDataClient extends DataClient {
 
   async fetchById<T = unknown>(
     table: string,
-    id: string | number
+    id: string | number,
   ): Promise<DataResult<T>> {
     try {
       this.validateTableName(table);
@@ -236,7 +238,7 @@ export class MockDataClient extends DataClient {
       if (!record) {
         return this.createErrorResult(
           new Error(`Record not found: ${id}`),
-          'NOT_FOUND'
+          "NOT_FOUND",
         );
       }
 
@@ -248,7 +250,7 @@ export class MockDataClient extends DataClient {
 
   async insert<T = unknown>(
     table: string,
-    data: Partial<T> | Partial<T>[]
+    data: Partial<T> | Partial<T>[],
   ): Promise<DataResult<T | T[]>> {
     try {
       this.validateTableName(table);
@@ -278,7 +280,7 @@ export class MockDataClient extends DataClient {
   async update<T = unknown>(
     table: string,
     id: string | number,
-    data: Partial<T>
+    data: Partial<T>,
   ): Promise<DataResult<T>> {
     try {
       this.validateTableName(table);
@@ -290,7 +292,7 @@ export class MockDataClient extends DataClient {
       if (!existing) {
         return this.createErrorResult(
           new Error(`Record not found: ${id}`),
-          'NOT_FOUND'
+          "NOT_FOUND",
         );
       }
 
@@ -303,10 +305,7 @@ export class MockDataClient extends DataClient {
     }
   }
 
-  async delete(
-    table: string,
-    id: string | number
-  ): Promise<DataResult<void>> {
+  async delete(table: string, id: string | number): Promise<DataResult<void>> {
     try {
       this.validateTableName(table);
       this.validateId(id);
@@ -315,7 +314,7 @@ export class MockDataClient extends DataClient {
       if (!tableData?.has(id)) {
         return this.createErrorResult(
           new Error(`Record not found: ${id}`),
-          'NOT_FOUND'
+          "NOT_FOUND",
         );
       }
 
@@ -350,7 +349,7 @@ export class MockDataClient extends DataClient {
     }
 
     const tableData = this.data.get(table)!;
-    records.forEach(record => {
+    records.forEach((record) => {
       const id = record.id ?? this.generateId();
       tableData.set(id, { ...record, id });
     });

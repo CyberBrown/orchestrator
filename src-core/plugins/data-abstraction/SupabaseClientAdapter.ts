@@ -1,12 +1,12 @@
 /**
  * Supabase Client Adapter
- * 
+ *
  * Implementation of DataClient interface for Supabase.
  * Adapts the existing Supabase client code to work with the generalized framework.
  */
 
-import { DataClient } from './DataClient';
-import type { DataQuery, DataResult } from '../../types/providers';
+import { DataClient } from "./DataClient";
+import type { DataQuery, DataResult } from "../../types/providers";
 
 /**
  * Configuration for Supabase client
@@ -38,7 +38,7 @@ export class SupabaseClientAdapter extends DataClient {
     // Example:
     // import { createClient } from '@supabase/supabase-js';
     // this.client = createClient(this.config.url, this.config.anonKey);
-    
+
     this.client = null; // Placeholder
   }
 
@@ -47,19 +47,19 @@ export class SupabaseClientAdapter extends DataClient {
    */
   async fetch<T = unknown>(
     table: string,
-    query?: DataQuery
+    query?: DataQuery,
   ): Promise<DataResult<T[]>> {
     try {
       this.validateTableName(table);
 
       if (!this.client) {
-        throw new Error('Supabase client not initialized');
+        throw new Error("Supabase client not initialized");
       }
 
       // Build Supabase query
-      let supabaseQuery = this.client.from(table).select(
-        query?.select?.join(',') ?? '*'
-      );
+      let supabaseQuery = this.client
+        .from(table)
+        .select(query?.select?.join(",") ?? "*");
 
       // Apply filters
       if (query?.filters) {
@@ -70,9 +70,9 @@ export class SupabaseClientAdapter extends DataClient {
 
       // Apply sorting
       if (query?.orderBy && query.orderBy.length > 0) {
-        query.orderBy.forEach(sort => {
+        query.orderBy.forEach((sort) => {
           supabaseQuery = supabaseQuery.order(sort.field, {
-            ascending: sort.direction === 'asc',
+            ascending: sort.direction === "asc",
           });
         });
       }
@@ -84,7 +84,7 @@ export class SupabaseClientAdapter extends DataClient {
       if (query?.offset !== undefined) {
         supabaseQuery = supabaseQuery.range(
           query.offset,
-          query.offset + (query.limit ?? 1000) - 1
+          query.offset + (query.limit ?? 1000) - 1,
         );
       }
 
@@ -109,20 +109,20 @@ export class SupabaseClientAdapter extends DataClient {
    */
   async fetchById<T = unknown>(
     table: string,
-    id: string | number
+    id: string | number,
   ): Promise<DataResult<T>> {
     try {
       this.validateTableName(table);
       this.validateId(id);
 
       if (!this.client) {
-        throw new Error('Supabase client not initialized');
+        throw new Error("Supabase client not initialized");
       }
 
       const { data, error } = await this.client
         .from(table)
-        .select('*')
-        .eq('id', id)
+        .select("*")
+        .eq("id", id)
         .single();
 
       if (error) {
@@ -132,7 +132,7 @@ export class SupabaseClientAdapter extends DataClient {
       if (!data) {
         return this.createErrorResult(
           new Error(`Record not found: ${id}`),
-          'NOT_FOUND'
+          "NOT_FOUND",
         );
       }
 
@@ -147,13 +147,13 @@ export class SupabaseClientAdapter extends DataClient {
    */
   async insert<T = unknown>(
     table: string,
-    data: Partial<T> | Partial<T>[]
+    data: Partial<T> | Partial<T>[],
   ): Promise<DataResult<T | T[]>> {
     try {
       this.validateTableName(table);
 
       if (!this.client) {
-        throw new Error('Supabase client not initialized');
+        throw new Error("Supabase client not initialized");
       }
 
       const { data: insertedData, error } = await this.client
@@ -178,20 +178,20 @@ export class SupabaseClientAdapter extends DataClient {
   async update<T = unknown>(
     table: string,
     id: string | number,
-    data: Partial<T>
+    data: Partial<T>,
   ): Promise<DataResult<T>> {
     try {
       this.validateTableName(table);
       this.validateId(id);
 
       if (!this.client) {
-        throw new Error('Supabase client not initialized');
+        throw new Error("Supabase client not initialized");
       }
 
       const { data: updatedData, error } = await this.client
         .from(table)
         .update(data)
-        .eq('id', id)
+        .eq("id", id)
         .select()
         .single();
 
@@ -208,22 +208,16 @@ export class SupabaseClientAdapter extends DataClient {
   /**
    * Delete record
    */
-  async delete(
-    table: string,
-    id: string | number
-  ): Promise<DataResult<void>> {
+  async delete(table: string, id: string | number): Promise<DataResult<void>> {
     try {
       this.validateTableName(table);
       this.validateId(id);
 
       if (!this.client) {
-        throw new Error('Supabase client not initialized');
+        throw new Error("Supabase client not initialized");
       }
 
-      const { error } = await this.client
-        .from(table)
-        .delete()
-        .eq('id', id);
+      const { error } = await this.client.from(table).delete().eq("id", id);
 
       if (error) {
         return this.createErrorResult(error, error.code);
@@ -241,7 +235,7 @@ export class SupabaseClientAdapter extends DataClient {
   async executeQuery<T = unknown>(query: unknown): Promise<DataResult<T>> {
     try {
       if (!this.client) {
-        throw new Error('Supabase client not initialized');
+        throw new Error("Supabase client not initialized");
       }
 
       // Execute raw SQL or RPC call
@@ -249,7 +243,7 @@ export class SupabaseClientAdapter extends DataClient {
       // Example for RPC:
       // const { data, error } = await this.client.rpc('function_name', params);
 
-      throw new Error('Custom query execution not implemented');
+      throw new Error("Custom query execution not implemented");
     } catch (error) {
       return this.createErrorResult(error);
     }
@@ -266,12 +260,12 @@ export class SupabaseClientAdapter extends DataClient {
 
       // Try a simple query to check connection
       const { error } = await this.client
-        .from('_health_check')
-        .select('*')
+        .from("_health_check")
+        .select("*")
         .limit(1);
 
       // If table doesn't exist, that's okay - we're just checking connection
-      return error?.code !== 'PGRST301'; // Not a connection error
+      return error?.code !== "PGRST301"; // Not a connection error
     } catch {
       return false;
     }
@@ -287,7 +281,7 @@ export class SupabaseClientAdapter extends DataClient {
 
     if (!url || !anonKey) {
       throw new Error(
-        'NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables are required'
+        "NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables are required",
       );
     }
 

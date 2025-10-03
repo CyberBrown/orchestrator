@@ -1,12 +1,15 @@
 /**
  * Vertex AI Adapter
- * 
+ *
  * Implementation of AIProvider interface for Google Cloud Vertex AI.
  * Adapts the existing Vertex AI code to work with the generalized framework.
  */
 
-import { AIProvider } from './AIProvider';
-import type { AIProviderRequest, AIProviderResponse } from '../../types/providers';
+import { AIProvider } from "./AIProvider";
+import type {
+  AIProviderRequest,
+  AIProviderResponse,
+} from "../../types/providers";
 
 /**
  * Configuration for Vertex AI
@@ -21,12 +24,12 @@ export interface VertexAIConfig {
  * Vertex AI Provider Implementation
  */
 export class VertexAIAdapter extends AIProvider {
-  readonly name = 'vertex-ai';
+  readonly name = "vertex-ai";
   readonly supportedModels = [
-    'gemini-2.0-flash-exp',
-    'gemini-1.5-pro',
-    'gemini-1.5-flash',
-    'gemini-1.0-pro',
+    "gemini-2.0-flash-exp",
+    "gemini-1.5-pro",
+    "gemini-1.5-flash",
+    "gemini-1.0-pro",
   ];
 
   private config: VertexAIConfig;
@@ -44,30 +47,35 @@ export class VertexAIAdapter extends AIProvider {
   private initializeClient(): void {
     // In a real implementation, this would initialize the actual Vertex AI client
     // For now, we'll create a placeholder
-    
+
     // Example with actual Vertex AI SDK:
     // import { VertexAI } from '@google-cloud/vertexai';
     // this.client = new VertexAI({
     //   project: this.config.projectId,
     //   location: this.config.location,
     // });
-    
+
     this.client = null; // Placeholder
   }
 
   /**
    * Generate content using Vertex AI
    */
-  async generateContent(request: AIProviderRequest): Promise<AIProviderResponse> {
+  async generateContent(
+    request: AIProviderRequest,
+  ): Promise<AIProviderResponse> {
     try {
       // Validate request
       this.validateRequest(request);
 
-      const modelId = request.modelId ?? this.config.defaultModel ?? this.getDefaultModel();
+      const modelId =
+        request.modelId ?? this.config.defaultModel ?? this.getDefaultModel();
 
       // Check if client is initialized
       if (!this.client) {
-        throw new Error('Vertex AI client not initialized. Ensure GCP credentials are configured.');
+        throw new Error(
+          "Vertex AI client not initialized. Ensure GCP credentials are configured.",
+        );
       }
 
       // Prepare the request for Vertex AI
@@ -77,7 +85,7 @@ export class VertexAIAdapter extends AIProvider {
       const response = await this.retryWithBackoff(
         () => this.callVertexAPI(vertexRequest),
         3,
-        1000
+        1000,
       );
 
       // Parse and return response
@@ -122,7 +130,7 @@ export class VertexAIAdapter extends AIProvider {
    */
   private prepareVertexRequest(
     request: AIProviderRequest,
-    modelId: string
+    modelId: string,
   ): any {
     const generationConfig: any = {};
 
@@ -142,13 +150,13 @@ export class VertexAIAdapter extends AIProvider {
       model: modelId,
       contents: [
         {
-          role: 'user',
+          role: "user",
           parts: [{ text: request.prompt }],
         },
       ],
       systemInstruction: request.systemInstruction
         ? {
-            role: 'system',
+            role: "system",
             parts: [{ text: request.systemInstruction }],
           }
         : undefined,
@@ -168,15 +176,17 @@ export class VertexAIAdapter extends AIProvider {
     //   systemInstruction: request.systemInstruction,
     //   generationConfig: request.generationConfig,
     // });
-    // 
+    //
     // const result = await generativeModel.generateContent({
     //   contents: request.contents,
     // });
-    // 
+    //
     // return result.response;
 
     // Placeholder implementation
-    throw new Error('Vertex AI client not implemented. Please configure the actual SDK.');
+    throw new Error(
+      "Vertex AI client not implemented. Please configure the actual SDK.",
+    );
   }
 
   /**
@@ -184,7 +194,7 @@ export class VertexAIAdapter extends AIProvider {
    */
   private parseVertexResponse(
     response: any,
-    modelId: string
+    modelId: string,
   ): AIProviderResponse {
     // In a real implementation, parse the actual Vertex AI response
     // Example:
@@ -192,22 +202,22 @@ export class VertexAIAdapter extends AIProvider {
     // if (!candidate) {
     //   throw new Error('No candidates returned from Vertex AI');
     // }
-    // 
+    //
     // const text = candidate.content.parts[0]?.text;
     // if (!text) {
     //   throw new Error('No text content in response');
     // }
-    // 
+    //
     // const usage = response.usageMetadata ? {
     //   promptTokens: response.usageMetadata.promptTokenCount,
     //   completionTokens: response.usageMetadata.candidatesTokenCount,
     //   totalTokens: response.usageMetadata.totalTokenCount,
     // } : undefined;
-    // 
+    //
     // return this.createSuccessResponse(text, modelId, usage);
 
     // Placeholder
-    throw new Error('Response parsing not implemented');
+    throw new Error("Response parsing not implemented");
   }
 
   /**
@@ -215,11 +225,11 @@ export class VertexAIAdapter extends AIProvider {
    */
   static fromEnvironment(): VertexAIAdapter {
     const projectId = process.env.GCP_PROJECT_ID;
-    const location = process.env.GCP_LOCATION || 'us-central1';
+    const location = process.env.GCP_LOCATION || "us-central1";
     const defaultModel = process.env.VERTEX_DEFAULT_MODEL;
 
     if (!projectId) {
-      throw new Error('GCP_PROJECT_ID environment variable is required');
+      throw new Error("GCP_PROJECT_ID environment variable is required");
     }
 
     return new VertexAIAdapter({

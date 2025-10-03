@@ -1,9 +1,9 @@
 /**
  * Generalized Orchestrator for LLM Workflows
- * 
+ *
  * This orchestrator manages the execution of multi-step workflows,
  * handling state transitions, retries, error handling, and human review points.
- * 
+ *
  * Completely decoupled from any specific business logic.
  */
 
@@ -14,9 +14,9 @@ import type {
   WorkflowHistoryEntry,
   RetryState,
   StepExecutionResult,
-} from '../types/workflow';
-import type { ActionRegistry } from '../types/action';
-import type { DataClient } from '../types/providers';
+} from "../types/workflow";
+import type { ActionRegistry } from "../types/action";
+import type { DataClient } from "../types/providers";
 
 /**
  * Result of orchestration decision
@@ -26,20 +26,20 @@ export interface OrchestrationResult<TData = Record<string, unknown>> {
   nextAction: {
     /** Step ID to execute */
     stepId?: string;
-    
+
     /** Special action (WAIT, TERMINATE, etc.) */
-    action?: 'WAIT' | 'TERMINATE' | 'RETRY' | 'ERROR';
-    
+    action?: "WAIT" | "TERMINATE" | "RETRY" | "ERROR";
+
     /** Delay before next action (ms) */
     delayMs?: number;
-    
+
     /** Instructions for the next step */
     instructions?: string;
-    
+
     /** Metadata */
     metadata?: Record<string, unknown>;
   };
-  
+
   /** Updated workflow state */
   updatedState: WorkflowState<TData>;
 }
@@ -50,13 +50,13 @@ export interface OrchestrationResult<TData = Record<string, unknown>> {
 export interface OrchestratorOptions {
   /** Data client for persistence */
   dataClient?: DataClient;
-  
+
   /** Action registry */
   actionRegistry: ActionRegistry;
-  
+
   /** Enable automatic state persistence */
   persistState?: boolean;
-  
+
   /** Custom logger */
   logger?: {
     info: (message: string, meta?: Record<string, unknown>) => void;
@@ -69,23 +69,23 @@ export interface OrchestratorOptions {
  * Terminal statuses that end workflow execution
  */
 const TERMINAL_STATUSES = new Set<WorkflowStatus>([
-  'success',
-  'failed',
-  'timed_out',
-  'canceled',
+  "success",
+  "failed",
+  "timed_out",
+  "canceled",
 ]);
 
 /**
  * Statuses that should be logged to history
  */
 const LOGGABLE_STATUSES = new Set<WorkflowStatus>([
-  'success',
-  'failed',
-  'timed_out',
-  'retrying',
-  'paused',
-  'canceled',
-  'validation_failed',
+  "success",
+  "failed",
+  "timed_out",
+  "retrying",
+  "paused",
+  "canceled",
+  "validation_failed",
 ]);
 
 /**
@@ -95,7 +95,7 @@ export class Orchestrator<TData = Record<string, unknown>> {
   private readonly actionRegistry: ActionRegistry;
   private readonly dataClient?: DataClient;
   private readonly persistState: boolean;
-  private readonly logger: OrchestratorOptions['logger'];
+  private readonly logger: OrchestratorOptions["logger"];
 
   constructor(options: OrchestratorOptions) {
     this.actionRegistry = options.actionRegistry;
@@ -109,7 +109,7 @@ export class Orchestrator<TData = Record<string, unknown>> {
    */
   async orchestrate(
     state: Readonly<WorkflowState<TData>>,
-    workflow: Readonly<WorkflowDefinition>
+    workflow: Readonly<WorkflowDefinition>,
   ): Promise<OrchestrationResult<TData>> {
     // Create mutable copy of state
     const currentState: WorkflowState<TData> = {
@@ -129,34 +129,34 @@ export class Orchestrator<TData = Record<string, unknown>> {
 
     // Handle different workflow states
     switch (currentState.status) {
-      case 'paused':
+      case "paused":
         return this.handlePaused(currentState);
-      
-      case 'canceled':
+
+      case "canceled":
         return this.handleCanceled(currentState);
-      
-      case 'retrying':
+
+      case "retrying":
         return this.handleRetrying(currentState, workflow);
-      
-      case 'validation_failed':
+
+      case "validation_failed":
         return this.handleValidationFailed(currentState, workflow);
-      
-      case 'pending_human_review':
+
+      case "pending_human_review":
         return this.handleHumanReview(currentState);
-      
-      case 'in_progress':
+
+      case "in_progress":
         return this.handleInProgress(currentState);
-      
-      case 'failed':
-      case 'timed_out':
+
+      case "failed":
+      case "timed_out":
         return this.handleFailure(currentState, workflow);
-      
-      case 'success':
+
+      case "success":
         return this.handleSuccess(currentState, workflow);
-      
-      case 'pending':
+
+      case "pending":
         return this.handlePending(currentState, workflow);
-      
+
       default:
         return this.handleUnknownStatus(currentState, workflow);
     }
@@ -168,15 +168,15 @@ export class Orchestrator<TData = Record<string, unknown>> {
   async executeStep(
     state: WorkflowState<TData>,
     workflow: WorkflowDefinition,
-    stepId: string
+    stepId: string,
   ): Promise<StepExecutionResult> {
-    const step = workflow.steps.find(s => s.stepId === stepId);
+    const step = workflow.steps.find((s) => s.stepId === stepId);
     if (!step) {
       return {
         success: false,
         error: {
           message: `Step not found: ${stepId}`,
-          type: 'STEP_NOT_FOUND',
+          type: "STEP_NOT_FOUND",
           retryable: false,
         },
       };
@@ -188,7 +188,7 @@ export class Orchestrator<TData = Record<string, unknown>> {
         success: false,
         error: {
           message: `Action not found: ${step.actionName}`,
-          type: 'ACTION_NOT_FOUND',
+          type: "ACTION_NOT_FOUND",
           retryable: false,
         },
       };
@@ -201,13 +201,13 @@ export class Orchestrator<TData = Record<string, unknown>> {
           context: state.context,
           config: step.config,
         });
-        
+
         if (!validation.valid) {
           return {
             success: false,
             error: {
-              message: `Validation failed: ${validation.errors?.join(', ')}`,
-              type: 'VALIDATION_ERROR',
+              message: `Validation failed: ${validation.errors?.join(", ")}`,
+              type: "VALIDATION_ERROR",
               retryable: false,
             },
           };
@@ -222,7 +222,7 @@ export class Orchestrator<TData = Record<string, unknown>> {
 
       return result;
     } catch (error) {
-      this.logger?.error('Step execution failed', {
+      this.logger?.error("Step execution failed", {
         stepId,
         actionName: step.actionName,
         error: error instanceof Error ? error.message : String(error),
@@ -231,8 +231,8 @@ export class Orchestrator<TData = Record<string, unknown>> {
       return {
         success: false,
         error: {
-          message: error instanceof Error ? error.message : 'Unknown error',
-          type: 'EXECUTION_ERROR',
+          message: error instanceof Error ? error.message : "Unknown error",
+          type: "EXECUTION_ERROR",
           retryable: true,
         },
       };
@@ -242,15 +242,17 @@ export class Orchestrator<TData = Record<string, unknown>> {
   /**
    * Persist workflow state if enabled
    */
-  private async persistStateIfEnabled(state: WorkflowState<TData>): Promise<void> {
+  private async persistStateIfEnabled(
+    state: WorkflowState<TData>,
+  ): Promise<void> {
     if (!this.persistState || !this.dataClient) {
       return;
     }
 
     try {
-      await this.dataClient.update('workflow_states', state.workflowId, state);
+      await this.dataClient.update("workflow_states", state.workflowId, state);
     } catch (error) {
-      this.logger?.error('Failed to persist state', {
+      this.logger?.error("Failed to persist state", {
         workflowId: state.workflowId,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -259,89 +261,99 @@ export class Orchestrator<TData = Record<string, unknown>> {
 
   // State handlers
 
-  private handlePaused(state: WorkflowState<TData>): OrchestrationResult<TData> {
+  private handlePaused(
+    state: WorkflowState<TData>,
+  ): OrchestrationResult<TData> {
     return {
-      nextAction: { action: 'WAIT' },
+      nextAction: { action: "WAIT" },
       updatedState: state,
     };
   }
 
-  private handleCanceled(state: WorkflowState<TData>): OrchestrationResult<TData> {
+  private handleCanceled(
+    state: WorkflowState<TData>,
+  ): OrchestrationResult<TData> {
     return {
-      nextAction: { action: 'TERMINATE' },
+      nextAction: { action: "TERMINATE" },
       updatedState: state,
     };
   }
 
   private handleRetrying(
     state: WorkflowState<TData>,
-    workflow: WorkflowDefinition
+    workflow: WorkflowDefinition,
   ): OrchestrationResult<TData> {
-    const nextStepId = state.currentStepId ?? this.getFirstStep(workflow)?.stepId;
-    
+    const nextStepId =
+      state.currentStepId ?? this.getFirstStep(workflow)?.stepId;
+
     return {
       nextAction: {
         stepId: nextStepId,
-        metadata: { reason: 'retry' },
+        metadata: { reason: "retry" },
       },
       updatedState: {
         ...state,
-        status: 'in_progress',
+        status: "in_progress",
       },
     };
   }
 
   private handleValidationFailed(
     state: WorkflowState<TData>,
-    workflow: WorkflowDefinition
+    workflow: WorkflowDefinition,
   ): OrchestrationResult<TData> {
-    const instructions = state.lastError?.validationMessage ?? 
-      'Previous output was invalid. Please regenerate following the required schema.';
-    
+    const instructions =
+      state.lastError?.validationMessage ??
+      "Previous output was invalid. Please regenerate following the required schema.";
+
     return {
       nextAction: {
         stepId: state.currentStepId ?? this.getFirstStep(workflow)?.stepId,
         instructions,
-        metadata: { reason: 'validation_failed' },
+        metadata: { reason: "validation_failed" },
       },
       updatedState: {
         ...state,
-        status: 'in_progress',
+        status: "in_progress",
       },
     };
   }
 
-  private handleHumanReview(state: WorkflowState<TData>): OrchestrationResult<TData> {
+  private handleHumanReview(
+    state: WorkflowState<TData>,
+  ): OrchestrationResult<TData> {
     return {
-      nextAction: { action: 'WAIT' },
+      nextAction: { action: "WAIT" },
       updatedState: state,
     };
   }
 
-  private handleInProgress(state: WorkflowState<TData>): OrchestrationResult<TData> {
+  private handleInProgress(
+    state: WorkflowState<TData>,
+  ): OrchestrationResult<TData> {
     return {
-      nextAction: { action: 'WAIT' },
+      nextAction: { action: "WAIT" },
       updatedState: state,
     };
   }
 
   private handleFailure(
     state: WorkflowState<TData>,
-    workflow: WorkflowDefinition
+    workflow: WorkflowDefinition,
   ): OrchestrationResult<TData> {
     // Check if we should retry
     if (this.shouldRetry(state, workflow)) {
       const { delayMs, retryState } = this.calculateBackoff(state);
-      
+
       return {
         nextAction: {
           stepId: state.currentStepId ?? this.getFirstStep(workflow)?.stepId,
           delayMs,
-          metadata: { reason: 'automatic_retry', attempt: retryState.attempt },
+          metadata: { reason: "automatic_retry", attempt: retryState.attempt },
         },
         updatedState: {
           ...state,
-          status: 'in_progress',
+          status: "in_progress",
           retryState,
         },
       };
@@ -353,19 +365,20 @@ export class Orchestrator<TData = Record<string, unknown>> {
       return {
         nextAction: {
           stepId: fallbackStepId,
-          metadata: { reason: 'fallback_route' },
+          metadata: { reason: "fallback_route" },
         },
         updatedState: {
           ...state,
           currentStepId: fallbackStepId,
-          status: 'in_progress',
+          status: "in_progress",
           retryState: undefined,
         },
       };
     }
 
     // Use error handler
-    const errorHandlerStepId = workflow.deadLetterHandler ?? workflow.errorHandler;
+    const errorHandlerStepId =
+      workflow.deadLetterHandler ?? workflow.errorHandler;
     if (errorHandlerStepId) {
       return {
         nextAction: {
@@ -381,19 +394,19 @@ export class Orchestrator<TData = Record<string, unknown>> {
 
     // No recovery possible
     return {
-      nextAction: { action: 'TERMINATE' },
+      nextAction: { action: "TERMINATE" },
       updatedState: state,
     };
   }
 
   private handleSuccess(
     state: WorkflowState<TData>,
-    workflow: WorkflowDefinition
+    workflow: WorkflowDefinition,
   ): OrchestrationResult<TData> {
     // If we're at the success handler, terminate
     if (state.currentStepId === workflow.successHandler) {
       return {
-        nextAction: { action: 'TERMINATE' },
+        nextAction: { action: "TERMINATE" },
         updatedState: {
           ...state,
           completedAt: new Date().toISOString(),
@@ -403,15 +416,15 @@ export class Orchestrator<TData = Record<string, unknown>> {
 
     // Find next step
     const nextStep = this.findNextStep(workflow, state.currentStepId);
-    
+
     if (!nextStep) {
       // No more steps, go to success handler
       const successHandlerStepId = workflow.successHandler;
-      
+
       if (!successHandlerStepId) {
         // No success handler, just terminate
         return {
-          nextAction: { action: 'TERMINATE' },
+          nextAction: { action: "TERMINATE" },
           updatedState: {
             ...state,
             completedAt: new Date().toISOString(),
@@ -430,32 +443,34 @@ export class Orchestrator<TData = Record<string, unknown>> {
 
     // Check if next step requires human review
     const requiresReview = nextStep.requiresHumanReview ?? false;
-    
+
     return {
-      nextAction: requiresReview ? { action: 'WAIT' } : { stepId: nextStep.stepId },
+      nextAction: requiresReview
+        ? { action: "WAIT" }
+        : { stepId: nextStep.stepId },
       updatedState: {
         ...state,
         currentStepId: nextStep.stepId,
-        status: requiresReview ? 'pending_human_review' : 'in_progress',
+        status: requiresReview ? "pending_human_review" : "in_progress",
       },
     };
   }
 
   private handlePending(
     state: WorkflowState<TData>,
-    workflow: WorkflowDefinition
+    workflow: WorkflowDefinition,
   ): OrchestrationResult<TData> {
     const firstStep = this.getFirstStep(workflow);
-    
+
     if (!firstStep) {
       return {
-        nextAction: { action: 'TERMINATE' },
+        nextAction: { action: "TERMINATE" },
         updatedState: {
           ...state,
-          status: 'failed',
+          status: "failed",
           lastError: {
-            message: 'No steps defined in workflow',
-            type: 'CONFIGURATION_ERROR',
+            message: "No steps defined in workflow",
+            type: "CONFIGURATION_ERROR",
             retryable: false,
           },
         },
@@ -467,7 +482,7 @@ export class Orchestrator<TData = Record<string, unknown>> {
       updatedState: {
         ...state,
         currentStepId: firstStep.stepId,
-        status: 'in_progress',
+        status: "in_progress",
         startedAt: new Date().toISOString(),
       },
     };
@@ -475,15 +490,16 @@ export class Orchestrator<TData = Record<string, unknown>> {
 
   private handleUnknownStatus(
     state: WorkflowState<TData>,
-    workflow: WorkflowDefinition
+    workflow: WorkflowDefinition,
   ): OrchestrationResult<TData> {
-    const errorHandlerStepId = workflow.deadLetterHandler ?? workflow.errorHandler;
-    
+    const errorHandlerStepId =
+      workflow.deadLetterHandler ?? workflow.errorHandler;
+
     if (errorHandlerStepId) {
       return {
         nextAction: {
           stepId: errorHandlerStepId,
-          metadata: { reason: 'unknown_status', status: state.status },
+          metadata: { reason: "unknown_status", status: state.status },
         },
         updatedState: {
           ...state,
@@ -493,7 +509,7 @@ export class Orchestrator<TData = Record<string, unknown>> {
     }
 
     return {
-      nextAction: { action: 'TERMINATE' },
+      nextAction: { action: "TERMINATE" },
       updatedState: state,
     };
   }
@@ -503,7 +519,7 @@ export class Orchestrator<TData = Record<string, unknown>> {
   private appendHistory(
     state: WorkflowState<TData>,
     status: WorkflowStatus,
-    notes?: Record<string, unknown>
+    notes?: Record<string, unknown>,
   ): void {
     if (!state.currentStepId) return;
 
@@ -531,19 +547,27 @@ export class Orchestrator<TData = Record<string, unknown>> {
     return workflow.steps[0] ?? null;
   }
 
-  private findNextStep(workflow: WorkflowDefinition, currentStepId: string | null) {
+  private findNextStep(
+    workflow: WorkflowDefinition,
+    currentStepId: string | null,
+  ) {
     if (!currentStepId) return this.getFirstStep(workflow);
-    
-    const currentIndex = workflow.steps.findIndex(s => s.stepId === currentStepId);
+
+    const currentIndex = workflow.steps.findIndex(
+      (s) => s.stepId === currentStepId,
+    );
     if (currentIndex === -1) return null;
-    
+
     return workflow.steps[currentIndex + 1] ?? null;
   }
 
-  private shouldRetry(state: WorkflowState<TData>, workflow: WorkflowDefinition): boolean {
+  private shouldRetry(
+    state: WorkflowState<TData>,
+    workflow: WorkflowDefinition,
+  ): boolean {
     if (!state.currentStepId) return false;
-    
-    const step = workflow.steps.find(s => s.stepId === state.currentStepId);
+
+    const step = workflow.steps.find((s) => s.stepId === state.currentStepId);
     if (!step) return false;
 
     const retryable = state.lastError?.retryable ?? true;
@@ -551,7 +575,7 @@ export class Orchestrator<TData = Record<string, unknown>> {
 
     const maxAttempts = step.maxRetries ?? 3;
     const attempts = state.retryState?.attempt ?? 0;
-    
+
     return attempts < maxAttempts;
   }
 
@@ -583,7 +607,7 @@ export class Orchestrator<TData = Record<string, unknown>> {
 
   private resolveFallback(
     state: WorkflowState<TData>,
-    workflow: WorkflowDefinition
+    workflow: WorkflowDefinition,
   ): string | null {
     if (!state.currentStepId) return null;
     return workflow.fallbackMap?.[state.currentStepId] ?? null;

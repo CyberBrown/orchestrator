@@ -1,11 +1,14 @@
 /**
  * Action Registry
- * 
+ *
  * Central registry for managing workflow actions.
  * Allows dynamic registration and retrieval of actions.
  */
 
-import type { Action, ActionRegistry as IActionRegistry } from '../types/action';
+import type {
+  Action,
+  ActionRegistry as IActionRegistry,
+} from "../types/action";
 
 /**
  * Implementation of ActionRegistry
@@ -18,7 +21,7 @@ export class ActionRegistry implements IActionRegistry {
    */
   register(action: Action): void {
     if (!action.id || action.id.trim().length === 0) {
-      throw new Error('Action ID is required');
+      throw new Error("Action ID is required");
     }
 
     if (this.actions.has(action.id)) {
@@ -32,7 +35,7 @@ export class ActionRegistry implements IActionRegistry {
    * Register multiple actions at once
    */
   registerMany(actions: Action[]): void {
-    actions.forEach(action => this.register(action));
+    actions.forEach((action) => this.register(action));
   }
 
   /**

@@ -103,23 +103,27 @@ Create a workflow configuration file (`my-workflow.json`):
 ### 3. Create Custom Actions
 
 ```typescript
-import { GenericAction, type ActionInput, type StepExecutionResult } from '@your-org/llm-orchestration-framework';
+import {
+  GenericAction,
+  type ActionInput,
+  type StepExecutionResult,
+} from "@your-org/llm-orchestration-framework";
 
 class ContentGenerationAction extends GenericAction {
-  readonly id = 'ai-generation';
-  readonly name = 'AI Content Generation';
+  readonly id = "ai-generation";
+  readonly name = "AI Content Generation";
 
   async execute(input: ActionInput): Promise<StepExecutionResult> {
     try {
       // Get data from previous step
-      const inputData = this.getPreviousOutput(input, 'fetch-data');
-      
+      const inputData = this.getPreviousOutput(input, "fetch-data");
+
       // Generate content using AI
       const content = await this.generateContent(
         `Generate content for: ${JSON.stringify(inputData)}`,
-        'You are a helpful content generator'
+        "You are a helpful content generator",
       );
-      
+
       return this.createSuccessResult({ content });
     } catch (error) {
       return this.createErrorResult(error as Error);
@@ -137,7 +141,7 @@ import {
   VertexAIAdapter,
   SupabaseClientAdapter,
   loadWorkflow,
-} from '@your-org/llm-orchestration-framework';
+} from "@your-org/llm-orchestration-framework";
 
 // Setup
 const actionRegistry = new ActionRegistry();
@@ -145,11 +149,13 @@ const aiProvider = VertexAIAdapter.fromEnvironment();
 const dataClient = SupabaseClientAdapter.fromEnvironment();
 
 // Register actions
-actionRegistry.register(new ContentGenerationAction({ aiProvider, dataClient }));
+actionRegistry.register(
+  new ContentGenerationAction({ aiProvider, dataClient }),
+);
 // ... register other actions
 
 // Load workflow
-const workflow = await loadWorkflow('./my-workflow.json');
+const workflow = await loadWorkflow("./my-workflow.json");
 
 // Create runner
 const runner = new WorkflowRunner({
@@ -160,15 +166,15 @@ const runner = new WorkflowRunner({
 
 // Execute
 const result = await runner.execute(workflow, {
-  userId: 'user-123',
+  userId: "user-123",
   input: {
-    topic: 'AI and Machine Learning',
-    style: 'technical',
+    topic: "AI and Machine Learning",
+    style: "technical",
   },
 });
 
-console.log('Workflow completed:', result.success);
-console.log('Final outputs:', result.state.context.outputs);
+console.log("Workflow completed:", result.success);
+console.log("Final outputs:", result.state.context.outputs);
 ```
 
 ## 🏗️ Core Concepts
@@ -176,6 +182,7 @@ console.log('Final outputs:', result.state.context.outputs);
 ### Workflows
 
 A workflow is a sequence of steps that execute in order. Each step:
+
 - Has a unique ID
 - Executes a specific action
 - Can depend on previous steps
@@ -184,6 +191,7 @@ A workflow is a sequence of steps that execute in order. Each step:
 ### Actions
 
 Actions are the building blocks of workflows. They:
+
 - Implement the `Action` interface
 - Receive context from previous steps
 - Return results for subsequent steps
@@ -209,6 +217,7 @@ input.context.outputs['step-1'] // Access previous output
 ### State Management
 
 The framework automatically manages workflow state:
+
 - Current step
 - Execution history
 - Retry attempts
@@ -222,13 +231,15 @@ The framework automatically manages workflow state:
 Implement the `AIProvider` interface to add new AI providers:
 
 ```typescript
-import { AIProvider } from '@your-org/llm-orchestration-framework';
+import { AIProvider } from "@your-org/llm-orchestration-framework";
 
 class OpenAIAdapter extends AIProvider {
-  readonly name = 'openai';
-  readonly supportedModels = ['gpt-4', 'gpt-3.5-turbo'];
+  readonly name = "openai";
+  readonly supportedModels = ["gpt-4", "gpt-3.5-turbo"];
 
-  async generateContent(request: AIProviderRequest): Promise<AIProviderResponse> {
+  async generateContent(
+    request: AIProviderRequest,
+  ): Promise<AIProviderResponse> {
     // Implementation
   }
 
@@ -243,7 +254,7 @@ class OpenAIAdapter extends AIProvider {
 Implement the `DataClient` interface for custom data sources:
 
 ```typescript
-import { DataClient } from '@your-org/llm-orchestration-framework';
+import { DataClient } from "@your-org/llm-orchestration-framework";
 
 class MongoDBAdapter extends DataClient {
   async fetch<T>(table: string, query?: DataQuery): Promise<DataResult<T[]>> {
@@ -263,25 +274,26 @@ class MongoDBAdapter extends DataClient {
 The framework includes mock implementations for testing:
 
 ```typescript
-import { MockDataClient, ActionRegistry } from '@your-org/llm-orchestration-framework';
+import {
+  MockDataClient,
+  ActionRegistry,
+} from "@your-org/llm-orchestration-framework";
 
-describe('My Workflow', () => {
-  it('should execute successfully', async () => {
+describe("My Workflow", () => {
+  it("should execute successfully", async () => {
     const dataClient = new MockDataClient();
     const actionRegistry = new ActionRegistry();
-    
+
     // Seed test data
-    dataClient.seed('users', [
-      { id: '1', name: 'Test User' }
-    ]);
-    
+    dataClient.seed("users", [{ id: "1", name: "Test User" }]);
+
     // Register test actions
     actionRegistry.register(new MyTestAction({ dataClient }));
-    
+
     // Execute workflow
     const runner = new WorkflowRunner({ actionRegistry, dataClient });
     const result = await runner.execute(workflow, { input: {} });
-    
+
     expect(result.success).toBe(true);
   });
 });
@@ -361,6 +373,7 @@ See `config/workflow-schema.json` for the complete schema.
 ## 🎓 Examples
 
 See the `tests/` directory for complete examples:
+
 - `core-flow.test.ts`: Basic 3-step workflow
 - Integration tests with mock providers
 - Custom action implementations

@@ -1,6 +1,6 @@
 /**
  * AIProvider Interface
- * 
+ *
  * Base interface that all AI provider implementations must follow.
  * This allows the framework to work with any LLM provider (Vertex AI, OpenAI, Anthropic, etc.)
  */
@@ -9,7 +9,7 @@ import type {
   AIProvider as IAIProvider,
   AIProviderRequest,
   AIProviderResponse,
-} from '../../types/providers';
+} from "../../types/providers";
 
 /**
  * Abstract base class for AI providers
@@ -23,7 +23,7 @@ export abstract class AIProvider implements IAIProvider {
    * Generate content using the AI provider
    */
   abstract generateContent(
-    request: AIProviderRequest
+    request: AIProviderRequest,
   ): Promise<AIProviderResponse>;
 
   /**
@@ -41,24 +41,24 @@ export abstract class AIProvider implements IAIProvider {
    */
   protected validateRequest(request: AIProviderRequest): void {
     if (!request.prompt || request.prompt.trim().length === 0) {
-      throw new Error('Prompt is required and cannot be empty');
+      throw new Error("Prompt is required and cannot be empty");
     }
 
     if (request.modelId && !this.supportedModels.includes(request.modelId)) {
       throw new Error(
         `Model ${request.modelId} is not supported by ${this.name}. ` +
-        `Supported models: ${this.supportedModels.join(', ')}`
+          `Supported models: ${this.supportedModels.join(", ")}`,
       );
     }
 
     if (request.temperature !== undefined) {
       if (request.temperature < 0 || request.temperature > 1) {
-        throw new Error('Temperature must be between 0 and 1');
+        throw new Error("Temperature must be between 0 and 1");
       }
     }
 
     if (request.maxTokens !== undefined && request.maxTokens <= 0) {
-      throw new Error('maxTokens must be greater than 0');
+      throw new Error("maxTokens must be greater than 0");
     }
   }
 
@@ -67,18 +67,18 @@ export abstract class AIProvider implements IAIProvider {
    */
   protected createErrorResponse(
     error: Error | unknown,
-    modelId?: string
+    modelId?: string,
   ): AIProviderResponse {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    
+
     return {
-      content: '',
+      content: "",
       success: false,
       provider: this.name,
-      model: modelId ?? 'unknown',
+      model: modelId ?? "unknown",
       error: {
         message: errorMessage,
-        type: error instanceof Error ? error.constructor.name : 'UnknownError',
+        type: error instanceof Error ? error.constructor.name : "UnknownError",
       },
     };
   }
@@ -94,7 +94,7 @@ export abstract class AIProvider implements IAIProvider {
       completionTokens: number;
       totalTokens: number;
     },
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): AIProviderResponse {
     return {
       content,
@@ -110,7 +110,7 @@ export abstract class AIProvider implements IAIProvider {
    * Get default model for this provider
    */
   protected getDefaultModel(): string {
-    return this.supportedModels[0] ?? 'default';
+    return this.supportedModels[0] ?? "default";
   }
 
   /**
@@ -119,7 +119,7 @@ export abstract class AIProvider implements IAIProvider {
   protected async retryWithBackoff<T>(
     operation: () => Promise<T>,
     maxRetries: number = 3,
-    baseDelayMs: number = 1000
+    baseDelayMs: number = 1000,
   ): Promise<T> {
     let lastError: Error | unknown;
 
@@ -128,7 +128,7 @@ export abstract class AIProvider implements IAIProvider {
         return await operation();
       } catch (error) {
         lastError = error;
-        
+
         // Don't retry on the last attempt
         if (attempt === maxRetries - 1) {
           break;
@@ -136,7 +136,7 @@ export abstract class AIProvider implements IAIProvider {
 
         // Calculate delay with exponential backoff
         const delay = baseDelayMs * Math.pow(2, attempt);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
 
