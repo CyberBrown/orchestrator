@@ -1,3 +1,10 @@
+dist
+build
+coverage
+node_modules
+.husky
+pnpm-lock.yaml
+src-core/pnpm-lock.yaml
 # Ignore artifacts:
 build
 coverage

@@ -1,6 +1,5 @@
 #!/usr/bin/env sh
-set -eu
+. "$(dirname "$0")/_/husky.sh"
 
-pnpm lint
-pnpm typecheck:fast
-
+echo "Running lint-staged (ESLint then Prettier) on staged files..."
+pnpm exec lint-staged
