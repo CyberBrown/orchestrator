@@ -179,3 +179,78 @@ export class AIProviderFactory {
     return this.providers.has(name.toLowerCase());
   }
 }
+
+/**
+ * Mock AIProvider for testing
+ *
+ * This class provides a mock implementation of the AIProvider for use in unit and integration tests.
+ * It allows you to simulate AI responses without making actual API calls.
+ */
+export class MockAIProvider extends AIProvider {
+  readonly name = "mock-ai-provider";
+  readonly supportedModels = ["mock-model-1", "mock-model-2"];
+
+  private seededResponses = new Map<string, string>();
+  private defaultResponse = "This is a mock AI response.";
+
+  /**
+   * Generate a mock content response.
+   * If a response has been seeded for the exact prompt, it will be returned.
+   * Otherwise, it returns a default mock response.
+   */
+  async generateContent(
+    request: AIProviderRequest,
+  ): Promise<AIProviderResponse> {
+    try {
+      this.validateRequest(request);
+
+      const content =
+        this.seededResponses.get(request.prompt) ?? this.defaultResponse;
+
+      return this.createSuccessResponse(
+        content,
+        request.modelId ?? this.getDefaultModel(),
+        {
+          promptTokens: request.prompt.length,
+          completionTokens: content.length,
+          totalTokens: request.prompt.length + content.length,
+        },
+      );
+    } catch (error) {
+      return this.createErrorResult(error, request.modelId);
+    }
+  }
+
+  /**
+   * Always returns true for availability.
+   */
+  async isAvailable(): Promise<boolean> {
+    return true;
+  }
+
+  /**
+   * Seed a specific response for a given prompt.
+   * @param prompt The prompt to match.
+   * @param response The response to return for the prompt.
+   */
+  seedResponse(prompt: string, response: string): void {
+    this.seededResponses.set(prompt, response);
+  }
+
+  /**
+   * Set a default response to be returned when no seeded response matches.
+   * @param response The default response.
+   */
+  setDefaultResponse(response: string): void {
+    this.defaultResponse = response;
+  }
+
+  /**
+   * Clear all seeded responses and reset the default response.
+   */
+  clear(): void {
+    this.seededResponses.clear();
+    this.defaultResponse = "This is a mock AI response.";
+  }
+}
+
