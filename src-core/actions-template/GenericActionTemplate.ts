@@ -5,6 +5,7 @@
  * Provides common patterns and structure for action implementation.
  */
 
+import { z } from 'zod';
 import type { Action, ActionInput, StepExecutionResult } from "../types/action";
 import type { DataClient, AIProvider } from "../types/providers";
 
@@ -34,6 +35,7 @@ export abstract class GenericAction<
   abstract readonly id: string;
   abstract readonly name: string;
   readonly description?: string;
+  readonly inputSchema?: z.ZodType<TInput>;
 
   protected dataClient?: DataClient;
   protected aiProvider?: AIProvider;
@@ -51,33 +53,34 @@ export abstract class GenericAction<
   abstract execute(input: ActionInput<TInput>): Promise<StepExecutionResult>;
 
   /**
-   * Validate input before execution
+   * Validate input before execution using a Zod schema.
    */
   async validate(input: ActionInput<TInput>): Promise<{
     valid: boolean;
     errors?: string[];
   }> {
-    const errors: string[] = [];
-
-    // Basic validation
-    if (!input.context) {
-      errors.push("Context is required");
+    if (!this.inputSchema) {
+      return { valid: true };
     }
 
-    // Allow subclasses to add custom validation
-    const customErrors = await this.customValidation(input);
-    if (customErrors.length > 0) {
-      errors.push(...customErrors);
+    const result = this.inputSchema.safeParse(input.context.input);
+
+    if (result.success) {
+      return { valid: true };
     }
+
+    const errors = result.error.errors.map(
+      (e) => `${e.path.join('.') || 'input'}: ${e.message}`
+    );
 
     return {
-      valid: errors.length === 0,
-      errors: errors.length > 0 ? errors : undefined,
+      valid: false,
+      errors,
     };
   }
 
   /**
-   * Custom validation logic - override in subclasses
+   * @deprecated This method is deprecated. Use the `inputSchema` property with a Zod schema for validation.
    */
   protected async customValidation(
     input: ActionInput<TInput>,
@@ -247,6 +250,10 @@ export class DataFetchAction extends GenericAction<
   readonly id = "data-fetch";
   readonly name = "Data Fetch Action";
   readonly description = "Fetches data from a specified table";
+  readonly inputSchema = z.object({
+    table: z.string().min(1, "Table name is required"),
+    filters: z.record(z.unknown()).optional(),
+  });
 
   async execute(
     input: ActionInput<{
@@ -255,11 +262,8 @@ export class DataFetchAction extends GenericAction<
     }>,
   ): Promise<StepExecutionResult> {
     try {
+      // Input is now validated by the orchestrator before this method is called.
       const { table, filters } = input.context.input;
-
-      if (!table) {
-        return this.createErrorResult("Table name is required", false);
-      }
 
       const data = await this.fetchData(table, filters);
 
