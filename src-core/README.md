@@ -380,6 +380,26 @@ See the `tests/` directory for complete examples:
 
 ## 🤝 Contributing
 
+### Developer Setup
+
+To contribute to the framework's development, navigate to the `src-core` directory and install the dependencies using `pnpm`.
+
+```bash
+# Install dependencies from the src-core directory
+pnpm install
+```
+
+### Running Tests
+
+Once dependencies are installed, you can run the test suite:
+
+```bash
+# From the src-core directory
+pnpm test
+```
+
+### Extending the Framework
+
 To extend the framework:
 
 1. **Add a new AI provider**: Extend `AIProvider` class
