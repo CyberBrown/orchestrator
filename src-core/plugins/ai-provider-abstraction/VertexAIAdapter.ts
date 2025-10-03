@@ -6,10 +6,8 @@
  */
 
 import { AIProvider } from "./AIProvider";
-import type {
-  AIProviderRequest,
-  AIProviderResponse,
-} from "../../types/providers";
+import type { AIProviderRequest, AIProviderResponse } from "../../types/providers";
+import { z } from "zod";
 
 /**
  * Configuration for Vertex AI
@@ -33,7 +31,7 @@ export class VertexAIAdapter extends AIProvider {
   ];
 
   private config: VertexAIConfig;
-  private client: any; // VertexAI client instance
+  private client: unknown; // VertexAI client instance
 
   constructor(config: VertexAIConfig) {
     super();
@@ -61,21 +59,16 @@ export class VertexAIAdapter extends AIProvider {
   /**
    * Generate content using Vertex AI
    */
-  async generateContent(
-    request: AIProviderRequest,
-  ): Promise<AIProviderResponse> {
+  async generateContent(request: AIProviderRequest): Promise<AIProviderResponse> {
     try {
       // Validate request
       this.validateRequest(request);
 
-      const modelId =
-        request.modelId ?? this.config.defaultModel ?? this.getDefaultModel();
+      const modelId = request.modelId ?? this.config.defaultModel ?? this.getDefaultModel();
 
       // Check if client is initialized
       if (!this.client) {
-        throw new Error(
-          "Vertex AI client not initialized. Ensure GCP credentials are configured.",
-        );
+        throw new Error("Vertex AI client not initialized. Ensure GCP credentials are configured.");
       }
 
       // Prepare the request for Vertex AI
@@ -128,11 +121,37 @@ export class VertexAIAdapter extends AIProvider {
   /**
    * Prepare request for Vertex AI format
    */
+  private static readonly VertexRequestSchema = z
+    .object({
+      model: z.string(),
+      contents: z.array(
+        z.object({
+          role: z.literal("user"),
+          parts: z.array(z.object({ text: z.string() })),
+        }),
+      ),
+      systemInstruction: z
+        .object({
+          role: z.literal("system"),
+          parts: z.array(z.object({ text: z.string() })),
+        })
+        .optional(),
+      generationConfig: z
+        .object({
+          temperature: z.number().optional(),
+          maxOutputTokens: z.number().optional(),
+          stopSequences: z.array(z.string()).optional(),
+        })
+        .partial()
+        .optional(),
+    })
+    .passthrough();
+
   private prepareVertexRequest(
     request: AIProviderRequest,
     modelId: string,
-  ): any {
-    const generationConfig: any = {};
+  ): z.infer<typeof VertexAIAdapter.VertexRequestSchema> {
+    const generationConfig: Record<string, unknown> = {};
 
     if (request.temperature !== undefined) {
       generationConfig.temperature = request.temperature;
@@ -146,7 +165,7 @@ export class VertexAIAdapter extends AIProvider {
       generationConfig.stopSequences = request.stopSequences;
     }
 
-    return {
+    const raw = {
       model: modelId,
       contents: [
         {
@@ -163,12 +182,24 @@ export class VertexAIAdapter extends AIProvider {
       generationConfig,
       ...request.parameters,
     };
+
+    const parsed = VertexAIAdapter.VertexRequestSchema.safeParse(raw);
+    if (!parsed.success) {
+      throw new Error(
+        `Invalid Vertex request: ${parsed.error.issues
+          .map((i) => `${i.path.join(".")}: ${i.message}`)
+          .join(", ")}`,
+      );
+    }
+    return parsed.data;
   }
 
   /**
    * Call Vertex AI API
    */
-  private async callVertexAPI(request: any): Promise<any> {
+  private async callVertexAPI(
+    _request: z.infer<typeof VertexAIAdapter.VertexRequestSchema>,
+  ): Promise<unknown> {
     // In a real implementation, this would call the actual Vertex AI API
     // Example:
     // const generativeModel = this.client.getGenerativeModel({
@@ -184,18 +215,13 @@ export class VertexAIAdapter extends AIProvider {
     // return result.response;
 
     // Placeholder implementation
-    throw new Error(
-      "Vertex AI client not implemented. Please configure the actual SDK.",
-    );
+    throw new Error("Vertex AI client not implemented. Please configure the actual SDK.");
   }
 
   /**
    * Parse Vertex AI response
    */
-  private parseVertexResponse(
-    response: any,
-    modelId: string,
-  ): AIProviderResponse {
+  private parseVertexResponse(_response: unknown, _modelId: string): AIProviderResponse {
     // In a real implementation, parse the actual Vertex AI response
     // Example:
     // const candidate = response.candidates?.[0];

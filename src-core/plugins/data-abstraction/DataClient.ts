@@ -5,11 +5,7 @@
  * Allows the framework to work with any database (Supabase, MongoDB, PostgreSQL, etc.)
  */
 
-import type {
-  DataClient as IDataClient,
-  DataQuery,
-  DataResult,
-} from "../../types/providers";
+import type { DataClient as IDataClient, DataQuery, DataResult } from "../../types/providers";
 
 /**
  * Abstract base class for data clients
@@ -18,18 +14,12 @@ export abstract class DataClient implements IDataClient {
   /**
    * Fetch multiple records from a table
    */
-  abstract fetch<T = unknown>(
-    table: string,
-    query?: DataQuery,
-  ): Promise<DataResult<T[]>>;
+  abstract fetch<T = unknown>(table: string, query?: DataQuery): Promise<DataResult<T[]>>;
 
   /**
    * Fetch a single record by ID
    */
-  abstract fetchById<T = unknown>(
-    table: string,
-    id: string | number,
-  ): Promise<DataResult<T>>;
+  abstract fetchById<T = unknown>(table: string, id: string | number): Promise<DataResult<T>>;
 
   /**
    * Insert new record(s)
@@ -51,10 +41,7 @@ export abstract class DataClient implements IDataClient {
   /**
    * Delete a record
    */
-  abstract delete(
-    table: string,
-    id: string | number,
-  ): Promise<DataResult<void>>;
+  abstract delete(table: string, id: string | number): Promise<DataResult<void>>;
 
   /**
    * Check if client is connected
@@ -69,10 +56,7 @@ export abstract class DataClient implements IDataClient {
   /**
    * Helper method to create success result
    */
-  protected createSuccessResult<T>(
-    data: T,
-    metadata?: Record<string, unknown>,
-  ): DataResult<T> {
+  protected createSuccessResult<T>(data: T, metadata?: Record<string, unknown>): DataResult<T> {
     return {
       success: true,
       data,
@@ -83,10 +67,7 @@ export abstract class DataClient implements IDataClient {
   /**
    * Helper method to create error result
    */
-  protected createErrorResult<T = unknown>(
-    error: Error | unknown,
-    code?: string,
-  ): DataResult<T> {
+  protected createErrorResult<T = unknown>(error: Error | unknown, code?: string): DataResult<T> {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     return {
@@ -119,14 +100,14 @@ export abstract class DataClient implements IDataClient {
    * Validate table name
    */
   protected validateTableName(table: string): void {
-    this.validateIdentifier(table, 'Table');
+    this.validateIdentifier(table, "Table");
   }
 
   /**
    * Validate column name
    */
   protected validateColumnName(column: string): void {
-    this.validateIdentifier(column, 'Column');
+    this.validateIdentifier(column, "Column");
   }
 
   /**
@@ -181,12 +162,9 @@ export abstract class DataClient implements IDataClient {
  * Mock DataClient for testing
  */
 export class MockDataClient extends DataClient {
-  private data = new Map<string, Map<string | number, any>>();
+  private data = new Map<string, Map<string | number, unknown>>();
 
-  async fetch<T = unknown>(
-    table: string,
-    query?: DataQuery,
-  ): Promise<DataResult<T[]>> {
+  async fetch<T = unknown>(table: string, query?: DataQuery): Promise<DataResult<T[]>> {
     try {
       this.validateTableName(table);
 
@@ -201,7 +179,8 @@ export class MockDataClient extends DataClient {
       if (query?.filters) {
         results = results.filter((item) => {
           return Object.entries(query.filters!).every(([key, value]) => {
-            return (item as any)[key] === value;
+            const rec = item as Record<string, unknown>;
+            return rec[key] === value;
           });
         });
       }
@@ -210,8 +189,8 @@ export class MockDataClient extends DataClient {
       if (query?.orderBy && query.orderBy.length > 0) {
         results.sort((a, b) => {
           for (const sort of query.orderBy!) {
-            const aVal = (a as any)[sort.field];
-            const bVal = (b as any)[sort.field];
+            const aVal = (a as Record<string, unknown>)[sort.field] as unknown as number | string;
+            const bVal = (b as Record<string, unknown>)[sort.field] as unknown as number | string;
 
             if (aVal < bVal) return sort.direction === "asc" ? -1 : 1;
             if (aVal > bVal) return sort.direction === "asc" ? 1 : -1;
@@ -238,10 +217,7 @@ export class MockDataClient extends DataClient {
     }
   }
 
-  async fetchById<T = unknown>(
-    table: string,
-    id: string | number,
-  ): Promise<DataResult<T>> {
+  async fetchById<T = unknown>(table: string, id: string | number): Promise<DataResult<T>> {
     try {
       this.validateTableName(table);
       this.validateId(id);
@@ -250,10 +226,7 @@ export class MockDataClient extends DataClient {
       const record = tableData?.get(id);
 
       if (!record) {
-        return this.createErrorResult(
-          new Error(`Record not found: ${id}`),
-          "NOT_FOUND",
-        );
+        return this.createErrorResult(new Error(`Record not found: ${id}`), "NOT_FOUND");
       }
 
       return this.createSuccessResult(record as T);
@@ -279,9 +252,10 @@ export class MockDataClient extends DataClient {
       const results: T[] = [];
 
       for (const record of records) {
-        const id = (record as any).id ?? this.generateId();
-        const fullRecord = { ...record, id } as T;
-        tableData.set(id, fullRecord);
+        const rec = record as Record<string, unknown>;
+        const id = (rec.id as string | number | undefined) ?? this.generateId();
+        const fullRecord = { ...rec, id } as T;
+        tableData.set(id as string | number, fullRecord as unknown);
         results.push(fullRecord);
       }
 
@@ -304,10 +278,7 @@ export class MockDataClient extends DataClient {
       const existing = tableData?.get(id);
 
       if (!existing) {
-        return this.createErrorResult(
-          new Error(`Record not found: ${id}`),
-          "NOT_FOUND",
-        );
+        return this.createErrorResult(new Error(`Record not found: ${id}`), "NOT_FOUND");
       }
 
       const updated = { ...existing, ...data, id } as T;
@@ -326,10 +297,7 @@ export class MockDataClient extends DataClient {
 
       const tableData = this.data.get(table);
       if (!tableData?.has(id)) {
-        return this.createErrorResult(
-          new Error(`Record not found: ${id}`),
-          "NOT_FOUND",
-        );
+        return this.createErrorResult(new Error(`Record not found: ${id}`), "NOT_FOUND");
       }
 
       tableData.delete(id);
@@ -357,15 +325,15 @@ export class MockDataClient extends DataClient {
   /**
    * Seed data for testing
    */
-  seed(table: string, records: any[]): void {
+  seed(table: string, records: Array<Record<string, unknown>>): void {
     if (!this.data.has(table)) {
       this.data.set(table, new Map());
     }
 
     const tableData = this.data.get(table)!;
     records.forEach((record) => {
-      const id = record.id ?? this.generateId();
-      tableData.set(id, { ...record, id });
+      const id = (record as Record<string, unknown>).id ?? this.generateId();
+      tableData.set(id as string | number, { ...record, id });
     });
   }
 }

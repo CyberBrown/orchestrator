@@ -12,7 +12,7 @@ This document provides essential context for AI models interacting with this pro
 - **Languages:** TypeScript (~5.3.0)
 - **Frameworks & Runtimes:** Node.js (>=18.0.0). The project is a framework itself, not reliant on a specific runtime framework like Express or Next.js.
 - **Databases:** The framework uses a pluggable architecture for data sources. It includes a ready-made adapter for Supabase (PostgreSQL).
-- **Key Libraries/Dependencies:** 
+- **Key Libraries/Dependencies:**
   - `@google-cloud/vertexai`: For AI provider integration (optional).
   - `@supabase/supabase-js`: For data client integration (optional).
   - `vitest`: For testing.

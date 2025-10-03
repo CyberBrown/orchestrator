@@ -1,4 +1,6 @@
-import type { Action, ActionInput, StepExecutionResult } from "../types/action";
+import { z } from "zod";
+import type { Action, ActionInput } from "../types/action";
+import type { StepExecutionResult } from "../types/workflow";
 import type { DataClient, AIProvider } from "../types/providers";
 export interface GenericActionConfig {
     dataClient?: DataClient;
@@ -9,6 +11,7 @@ export declare abstract class GenericAction<TInput = Record<string, unknown>, TO
     abstract readonly id: string;
     abstract readonly name: string;
     readonly description?: string;
+    readonly inputSchema?: z.ZodType<TInput>;
     protected dataClient?: DataClient;
     protected aiProvider?: AIProvider;
     protected config: GenericActionConfig;
@@ -18,7 +21,7 @@ export declare abstract class GenericAction<TInput = Record<string, unknown>, TO
         valid: boolean;
         errors?: string[];
     }>;
-    protected customValidation(input: ActionInput<TInput>): Promise<string[]>;
+    protected customValidation(_input: ActionInput<TInput>): Promise<string[]>;
     cleanup(): Promise<void>;
     protected fetchData<T = unknown>(table: string, filters?: Record<string, unknown>): Promise<T[]>;
     protected saveData<T = unknown>(table: string, data: Partial<T>): Promise<T>;
@@ -40,6 +43,16 @@ export declare class DataFetchAction extends GenericAction<{
     readonly id = "data-fetch";
     readonly name = "Data Fetch Action";
     readonly description = "Fetches data from a specified table";
+    readonly inputSchema: z.ZodObject<{
+        table: z.ZodString;
+        filters: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+    }, "strip", z.ZodTypeAny, {
+        table: string;
+        filters?: Record<string, unknown> | undefined;
+    }, {
+        table: string;
+        filters?: Record<string, unknown> | undefined;
+    }>;
     execute(input: ActionInput<{
         table: string;
         filters?: Record<string, unknown>;

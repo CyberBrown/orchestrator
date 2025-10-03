@@ -12,7 +12,6 @@ import type {
   WorkflowState,
   WorkflowStatus,
   WorkflowHistoryEntry,
-  RetryState,
   StepExecutionResult,
   WorkflowStep,
 } from "../types/workflow";
@@ -69,17 +68,12 @@ export interface OrchestratorOptions {
 /**
  * Terminal statuses that end workflow execution
  */
-const TERMINAL_STATUSES = new Set<WorkflowStatus>([
-  "success",
-  "failed",
-  "timed_out",
-  "canceled",
-]);
+const _TERMINAL_STATUSES = new Set<WorkflowStatus>(["success", "failed", "timed_out", "canceled"]);
 
 /**
  * Core Orchestrator class
  */
-export class Orchestrator<TData = Record<string, unknown>> {
+export class Orchestrator<TData extends Record<string, unknown> = Record<string, unknown>> {
   private readonly actionRegistry: ActionRegistry;
   private readonly dataClient?: DataClient;
   private readonly persistState: boolean;
@@ -225,27 +219,19 @@ export class Orchestrator<TData = Record<string, unknown>> {
 
   // State handlers
 
-  private handlePaused(
-    state: WorkflowState<TData>,
-  ): OrchestrationResult<TData> {
+  private handlePaused(state: WorkflowState<TData>): OrchestrationResult<TData> {
     return { nextAction: { action: "WAIT" }, updatedState: state };
   }
 
-  private handleCanceled(
-    state: WorkflowState<TData>,
-  ): OrchestrationResult<TData> {
+  private handleCanceled(state: WorkflowState<TData>): OrchestrationResult<TData> {
     return { nextAction: { action: "TERMINATE" }, updatedState: state };
   }
 
-  private handleHumanReview(
-    state: WorkflowState<TData>,
-  ): OrchestrationResult<TData> {
+  private handleHumanReview(state: WorkflowState<TData>): OrchestrationResult<TData> {
     return { nextAction: { action: "WAIT" }, updatedState: state };
   }
 
-  private handleInProgress(
-    state: WorkflowState<TData>,
-  ): OrchestrationResult<TData> {
+  private handleInProgress(state: WorkflowState<TData>): OrchestrationResult<TData> {
     // If in progress, it means we are waiting for running steps to complete.
     return { nextAction: { action: "WAIT" }, updatedState: state };
   }
@@ -255,8 +241,7 @@ export class Orchestrator<TData = Record<string, unknown>> {
     workflow: WorkflowDefinition,
   ): OrchestrationResult<TData> {
     // Simplified failure handling for now. No complex retry/fallback for parallel execution.
-    const errorHandlerStepId =
-      workflow.deadLetterHandler ?? workflow.errorHandler;
+    const errorHandlerStepId = workflow.deadLetterHandler ?? workflow.errorHandler;
     if (errorHandlerStepId) {
       return {
         nextAction: { stepIds: [errorHandlerStepId] },
@@ -284,9 +269,7 @@ export class Orchestrator<TData = Record<string, unknown>> {
     }
 
     const allStepsFinished = workflow.steps.every((step) =>
-      state.history.some(
-        (h) => h.stepId === step.stepId && h.status === "success",
-      ),
+      state.history.some((h) => h.stepId === step.stepId && h.status === "success"),
     );
 
     if (allStepsFinished) {
@@ -345,31 +328,21 @@ export class Orchestrator<TData = Record<string, unknown>> {
   /**
    * Finds all steps that are ready to be executed based on their dependencies.
    */
-  private findRunnableSteps(
-    workflow: WorkflowDefinition,
-    state: WorkflowState<TData>,
-  ): string[] {
+  private findRunnableSteps(workflow: WorkflowDefinition, state: WorkflowState<TData>): string[] {
     const completedStepIds = new Set(
-      state.history
-        .filter((h) => h.status === "success")
-        .map((h) => h.stepId),
+      state.history.filter((h) => h.status === "success").map((h) => h.stepId),
     );
     const runningStepIds = new Set(state.runningStepIds);
 
     const runnableSteps: string[] = [];
 
     for (const step of workflow.steps) {
-      if (
-        completedStepIds.has(step.stepId) ||
-        runningStepIds.has(step.stepId)
-      ) {
+      if (completedStepIds.has(step.stepId) || runningStepIds.has(step.stepId)) {
         continue;
       }
 
       const dependencies = step.dependencies ?? [];
-      const dependenciesMet = dependencies.every((depId) =>
-        completedStepIds.has(depId),
-      );
+      const dependenciesMet = dependencies.every((depId) => completedStepIds.has(depId));
 
       if (dependenciesMet) {
         runnableSteps.push(step.stepId);

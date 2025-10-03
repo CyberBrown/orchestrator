@@ -4,10 +4,10 @@
  * Utility for loading and validating workflow configurations from JSON files.
  */
 
-import { z } from 'zod';
-import { WorkflowDefinitionSchema, WorkflowDefinition } from '../types/schemas';
-import * as fs from 'fs';
-import * as path from 'path';
+import { z } from "zod";
+import { WorkflowDefinitionSchema, WorkflowDefinition } from "../types/schemas";
+import * as fs from "fs";
+import * as path from "path";
 
 /**
  * Options for workflow loader
@@ -42,12 +42,10 @@ export class WorkflowLoader {
    */
   async loadFromFile(filePath: string): Promise<WorkflowDefinition> {
     try {
-      const fullPath = path.isAbsolute(filePath)
-        ? filePath
-        : path.join(this.baseDir, filePath);
+      const fullPath = path.isAbsolute(filePath) ? filePath : path.join(this.baseDir, filePath);
 
       // Read file
-      const content = await fs.promises.readFile(fullPath, 'utf-8');
+      const content = await fs.promises.readFile(fullPath, "utf-8");
 
       // Parse JSON
       const json = JSON.parse(content);
@@ -85,9 +83,7 @@ export class WorkflowLoader {
       return substituted as WorkflowDefinition;
     } catch (error) {
       throw new Error(
-        `Failed to parse workflow JSON: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        `Failed to parse workflow JSON: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
@@ -109,10 +105,10 @@ export class WorkflowLoader {
    * Substitute environment variables in workflow config
    */
   private substituteEnvVars(obj: unknown): unknown {
-    if (typeof obj === 'string') {
+    if (typeof obj === "string") {
       // Replace ${VAR_NAME} with environment variable value
       return obj.replace(/\$\{([^}]+)\}/g, (_, varName) => {
-        return this.env[varName] ?? '';
+        return this.env[varName] ?? "";
       });
     }
 
@@ -120,7 +116,7 @@ export class WorkflowLoader {
       return obj.map((item) => this.substituteEnvVars(item));
     }
 
-    if (obj && typeof obj === 'object') {
+    if (obj && typeof obj === "object") {
       const result: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(obj)) {
         result[key] = this.substituteEnvVars(value);
@@ -139,7 +135,9 @@ export class WorkflowLoader {
       WorkflowDefinitionSchema.parse(workflow);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const errorMessages = error.errors.map(e => `(${e.path.join('.')}) ${e.message}`).join('; ');
+        const errorMessages = error.errors
+          .map((e) => `(${e.path.join(".")}) ${e.message}`)
+          .join("; ");
         throw new Error(`Workflow validation failed: ${errorMessages}`);
       }
       throw error;
@@ -149,17 +147,12 @@ export class WorkflowLoader {
   /**
    * Save workflow to file
    */
-  async saveToFile(
-    workflow: WorkflowDefinition,
-    filePath: string,
-  ): Promise<void> {
+  async saveToFile(workflow: WorkflowDefinition, filePath: string): Promise<void> {
     try {
-      const fullPath = path.isAbsolute(filePath)
-        ? filePath
-        : path.join(this.baseDir, filePath);
+      const fullPath = path.isAbsolute(filePath) ? filePath : path.join(this.baseDir, filePath);
 
       const json = JSON.stringify(workflow, null, 2);
-      await fs.promises.writeFile(fullPath, json, 'utf-8');
+      await fs.promises.writeFile(fullPath, json, "utf-8");
     } catch (error) {
       throw new Error(
         `Failed to save workflow to ${filePath}: ${

@@ -1,3 +1,4 @@
+import { SupabaseClient as SupabaseClientType } from "@supabase/supabase-js";
 import { DataClient } from "./DataClient";
 import type { DataQuery, DataResult } from "../../types/providers";
 export interface SupabaseConfig {
@@ -15,9 +16,9 @@ export declare class SupabaseClientAdapter extends DataClient {
     insert<T = unknown>(table: string, data: Partial<T> | Partial<T>[]): Promise<DataResult<T | T[]>>;
     update<T = unknown>(table: string, id: string | number, data: Partial<T>): Promise<DataResult<T>>;
     delete(table: string, id: string | number): Promise<DataResult<void>>;
-    executeQuery<T = unknown>(query: unknown): Promise<DataResult<T>>;
+    executeQuery<T = unknown>(_query: unknown): Promise<DataResult<T>>;
     isConnected(): Promise<boolean>;
     static fromEnvironment(): SupabaseClientAdapter;
-    getClient(): any;
+    getClient(): SupabaseClientType;
 }
 //# sourceMappingURL=SupabaseClientAdapter.d.ts.map

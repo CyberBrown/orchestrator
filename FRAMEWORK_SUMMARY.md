@@ -80,106 +80,74 @@ src-core/
 
 ## 🔑 Key Features
 
-### 1. Configuration-Driven Workflows
+### 1. Parallel Step Execution
 
-Define workflows in JSON without writing code:
+The orchestration engine automatically executes independent workflow steps concurrently, significantly improving performance for I/O-bound tasks.
+
+### 2. Configuration-Driven Workflows
+
+Define complex workflows, including parallel execution paths, in simple JSON.
 
 ```json
 {
-  "id": "content-generation",
-  "name": "Content Generation Workflow",
+  "id": "parallel-workflow",
   "steps": [
-    {
-      "stepId": "fetch-data",
-      "actionName": "data-fetch",
-      "config": { "table": "content_requests" }
-    },
-    {
-      "stepId": "generate-content",
-      "actionName": "ai-generation",
-      "dependencies": ["fetch-data"]
-    }
+    { "stepId": "A", "actionName": "action-a" },
+    { "stepId": "B", "actionName": "action-b" },
+    { "stepId": "C", "actionName": "action-c", "dependencies": ["A", "B"] }
   ]
 }
 ```
 
-### 2. Pluggable Architecture
+### 3. Robust Validation
 
-Easily swap implementations:
+Workflows and action inputs are rigorously validated using Zod schemas, preventing configuration errors and ensuring data integrity.
+
+### 4. Pluggable Architecture
+
+Easily swap implementations for AI providers and data sources.
 
 ```typescript
-// Use Vertex AI
+// Use Vertex AI or a Mock provider for testing
 const aiProvider = new VertexAIAdapter(config);
-
-// Or switch to OpenAI (implement OpenAIAdapter)
-const aiProvider = new OpenAIAdapter(config);
-
-// Same for data sources
-const dataClient = new SupabaseClientAdapter(config);
-// Or: new MongoDBAdapter(config)
+const mockAI = new MockAIProvider();
 ```
 
-### 3. Type-Safe Context Passing
+### 5. Secure Data Handling
 
-Data flows seamlessly between steps:
+The framework is designed with security in mind, using parameterized queries and identifier validation in its data adapters to prevent SQL injection.
 
-```typescript
-// Step 1 output
-{ userId: '123', data: [...] }
+### 6. Type-Safe Context Passing
 
-// Step 2 automatically receives it
-const previousData = this.getPreviousOutput(input, 'step-1');
+Data flows seamlessly and safely between steps with full TypeScript support.
 
-// Step 2 produces new output
-{ processedData: [...], metadata: {...} }
+### 7. Advanced Error Handling
 
-// Step 3 can access all previous outputs
-```
+Multiple recovery mechanisms are built-in, including automatic retries, fallback routes, and custom error handlers.
 
-### 4. Robust Error Handling
+### 8. Comprehensive State Management
 
-Multiple recovery mechanisms:
-
-- **Automatic Retries**: Exponential backoff
-- **Fallback Routes**: Alternative execution paths
-- **Error Handlers**: Custom error processing
-- **Dead Letter Queue**: Unrecoverable failure handling
-
-### 5. State Management
-
-Automatic workflow state tracking:
-
-```typescript
-{
-  workflowId: 'wf-123',
-  status: 'in_progress',
-  currentStepId: 'step-2',
-  history: [...],
-  context: {
-    input: {...},
-    outputs: {
-      'step-1': {...},
-      'step-2': {...}
-    }
-  }
-}
-```
+The framework automatically tracks the state of the entire workflow, including running steps, history, and all inputs/outputs.
 
 ## 🏗️ Architecture Principles
 
 ### Decoupling
+
 - **Before**: Tightly coupled to Brand Kit business logic
 - **After**: Generic interfaces work with any domain
 
 ### Abstraction
+
 - **Before**: Direct Supabase and Vertex AI calls
 - **After**: Abstract interfaces allow any provider
 
 ### Configuration
+
 - **Before**: Hard-coded workflow sequences
 - **After**: JSON-defined workflows with validation
 
 ### Extensibility
+
 - **Before**: Adding features requires core changes
 - **After**: Extend through plugins and actions
 
@@ -188,16 +156,14 @@ Automatic workflow state tracking:
 ### Workflow Definition
 
 **Before:**
+
 ```typescript
 // Hard-coded in lib/orchestrator.ts
-const sequence = [
-  "Agent1_Analyst",
-  "Agent2_BrandStrategist",
-  "Agent3_BrandConsultant"
-];
+const sequence = ["Agent1_Analyst", "Agent2_BrandStrategist", "Agent3_BrandConsultant"];
 ```
 
 **After:**
+
 ```json
 {
   "steps": [
@@ -211,6 +177,7 @@ const sequence = [
 ### Action Implementation
 
 **Before:**
+
 ```typescript
 // lib/agents/registry.ts - Brand-specific
 Agent1_Analyst: {
@@ -223,11 +190,12 @@ Agent1_Analyst: {
 ```
 
 **After:**
+
 ```typescript
 // Generic, reusable action
 class ResearchAction extends GenericAction {
   async execute(input: ActionInput): Promise<StepExecutionResult> {
-    const data = await this.fetchData('research_data');
+    const data = await this.fetchData("research_data");
     const result = await this.generateContent(prompt);
     return this.createSuccessResult(result);
   }
@@ -237,19 +205,19 @@ class ResearchAction extends GenericAction {
 ### Database Access
 
 **Before:**
+
 ```typescript
 // Direct Supabase calls
 const supabase = createClient();
-const { data } = await supabase
-  .from('brand_attributes')
-  .select('*');
+const { data } = await supabase.from("brand_attributes").select("*");
 ```
 
 **After:**
+
 ```typescript
 // Abstract interface
-const data = await this.fetchData('brand_attributes', {
-  filters: { user_id: userId }
+const data = await this.fetchData("brand_attributes", {
+  filters: { user_id: userId },
 });
 ```
 
@@ -265,16 +233,16 @@ import {
   SupabaseClientAdapter,
   loadWorkflow,
   GenericAction,
-} from '@llm-orchestration/core';
+} from "@llm-orchestration/core";
 
 // 1. Create custom action
 class MyAction extends GenericAction {
-  readonly id = 'my-action';
-  readonly name = 'My Custom Action';
+  readonly id = "my-action";
+  readonly name = "My Custom Action";
 
   async execute(input: ActionInput): Promise<StepExecutionResult> {
-    const data = await this.fetchData('my_table');
-    const result = await this.generateContent('Generate something');
+    const data = await this.fetchData("my_table");
+    const result = await this.generateContent("Generate something");
     return this.createSuccessResult(result);
   }
 }
@@ -288,7 +256,7 @@ const actionRegistry = new ActionRegistry();
 actionRegistry.register(new MyAction({ aiProvider, dataClient }));
 
 // 4. Load workflow
-const workflow = await loadWorkflow('./my-workflow.json');
+const workflow = await loadWorkflow("./my-workflow.json");
 
 // 5. Execute
 const runner = new WorkflowRunner({
@@ -298,55 +266,65 @@ const runner = new WorkflowRunner({
 });
 
 const result = await runner.execute(workflow, {
-  userId: 'user-123',
-  input: { topic: 'AI' },
+  userId: "user-123",
+  input: { topic: "AI" },
 });
 
-console.log('Success:', result.success);
-console.log('Outputs:', result.state.context.outputs);
+console.log("Success:", result.success);
+console.log("Outputs:", result.state.context.outputs);
 ```
 
 ## 🧪 Testing Capabilities
 
 ### Mock Providers
 
-```typescript
-const dataClient = new MockDataClient();
-dataClient.seed('users', [
-  { id: '1', name: 'Test User' }
-]);
+The framework includes mock implementations for both the data and AI providers, allowing for complete isolation from external services during testing.
 
+```typescript
+// Mock the Data Client
+const dataClient = new MockDataClient();
+dataClient.seed("users", [{ id: "1", name: "Test User" }]);
+
+// Mock the AI Provider
 const aiProvider = new MockAIProvider();
+aiProvider.seedResponse("hello", "mock response for hello");
 ```
 
 ### Integration Tests
 
+The testing suite validates the core orchestration logic, including parallel execution, state management, and error handling.
+
 ```typescript
-it('should execute 3-step workflow', async () => {
+it("should execute a parallel workflow correctly", async () => {
   const result = await runner.execute(workflow, { input: {} });
-  
+
   expect(result.success).toBe(true);
-  expect(result.state.context.outputs['step-1']).toBeDefined();
-  expect(result.state.context.outputs['step-2']).toBeDefined();
-  expect(result.state.context.outputs['step-3']).toBeDefined();
+  // Verify that parallel steps have outputs
+  expect(result.state.context.outputs["A"]).toBeDefined();
+  expect(result.state.context.outputs["B"]).toBeDefined();
+  // Verify that the dependent step has its output
+  expect(result.state.context.outputs["C"]).toBeDefined();
 });
 ```
 
 ## 📈 Benefits
 
 ### For Developers
+
 - **Faster Development**: Reusable actions and clear patterns
 - **Better Testing**: Mock implementations for all interfaces
 - **Type Safety**: Full TypeScript support
 - **Clear Structure**: Well-organized, documented code
 
 ### For Projects
+
 - **Flexibility**: Easy to adapt to new requirements
 - **Maintainability**: Clear separation of concerns
 - **Scalability**: Add new workflows without core changes
 - **Reliability**: Built-in error handling and retry logic
 
 ### For Organizations
+
 - **Reusability**: One framework for all LLM workflows
 - **Consistency**: Standardized approach across projects
 - **Cost Efficiency**: Reduce development time
@@ -355,21 +333,25 @@ it('should execute 3-step workflow', async () => {
 ## 🔄 Migration Path
 
 ### Phase 1: Setup (Week 1)
+
 - Install framework alongside existing code
 - Set up configuration files
 - Create initial action implementations
 
 ### Phase 2: Proof of Concept (Week 2)
+
 - Migrate one simple workflow
 - Test thoroughly
 - Gather feedback
 
 ### Phase 3: Full Migration (Week 3-4)
+
 - Migrate remaining workflows
 - Update all actions
 - Comprehensive testing
 
 ### Phase 4: Cleanup (Week 5)
+
 - Remove old orchestration code
 - Final documentation
 - Production deployment
@@ -385,11 +367,12 @@ it('should execute 3-step workflow', async () => {
 ## 🔧 Extensibility Points
 
 ### Add New AI Provider
+
 ```typescript
 class OpenAIAdapter extends AIProvider {
-  readonly name = 'openai';
-  readonly supportedModels = ['gpt-4', 'gpt-3.5-turbo'];
-  
+  readonly name = "openai";
+  readonly supportedModels = ["gpt-4", "gpt-3.5-turbo"];
+
   async generateContent(request: AIProviderRequest) {
     // Implementation
   }
@@ -397,6 +380,7 @@ class OpenAIAdapter extends AIProvider {
 ```
 
 ### Add New Data Client
+
 ```typescript
 class MongoDBAdapter extends DataClient {
   async fetch<T>(table: string, query?: DataQuery) {
@@ -406,10 +390,11 @@ class MongoDBAdapter extends DataClient {
 ```
 
 ### Create Custom Actions
+
 ```typescript
 class CustomAction extends GenericAction {
-  readonly id = 'custom-action';
-  
+  readonly id = "custom-action";
+
   async execute(input: ActionInput) {
     // Your logic here
   }
@@ -441,16 +426,19 @@ class CustomAction extends GenericAction {
 ## 🎯 Next Steps
 
 ### Immediate
+
 1. Review and test the framework
 2. Provide feedback on API design
 3. Test migration with one workflow
 
 ### Short-term
+
 1. Complete full migration
 2. Add more example actions
 3. Create video tutorials
 
 ### Long-term
+
 1. Publish to NPM
 2. Build community
 3. Add more provider adapters
@@ -459,6 +447,7 @@ class CustomAction extends GenericAction {
 ## 📞 Support
 
 For questions or issues:
+
 - Review documentation in `src-core/README.md`
 - Check migration guide in `MIGRATION_GUIDE.md`
 - Examine tests in `tests/core-flow.test.ts`

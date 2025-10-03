@@ -1,4 +1,4 @@
-import type { WorkflowDefinition } from "../types/workflow";
+import { WorkflowDefinition } from "../types/schemas";
 export interface WorkflowLoaderOptions {
     baseDir?: string;
     validate?: boolean;
@@ -14,7 +14,6 @@ export declare class WorkflowLoader {
     loadFromObject(obj: unknown): WorkflowDefinition;
     private substituteEnvVars;
     private validateWorkflow;
-    private validateStep;
     saveToFile(workflow: WorkflowDefinition, filePath: string): Promise<void>;
 }
 export declare function loadWorkflow(filePath: string, options?: WorkflowLoaderOptions): Promise<WorkflowDefinition>;

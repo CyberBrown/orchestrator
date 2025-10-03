@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VertexAIAdapter = void 0;
 const AIProvider_1 = require("./AIProvider");
+const zod_1 = require("zod");
 class VertexAIAdapter extends AIProvider_1.AIProvider {
     constructor(config) {
         super();
@@ -63,7 +64,7 @@ class VertexAIAdapter extends AIProvider_1.AIProvider {
         if (request.stopSequences && request.stopSequences.length > 0) {
             generationConfig.stopSequences = request.stopSequences;
         }
-        return {
+        const raw = {
             model: modelId,
             contents: [
                 {
@@ -80,11 +81,18 @@ class VertexAIAdapter extends AIProvider_1.AIProvider {
             generationConfig,
             ...request.parameters,
         };
+        const parsed = VertexAIAdapter.VertexRequestSchema.safeParse(raw);
+        if (!parsed.success) {
+            throw new Error(`Invalid Vertex request: ${parsed.error.issues
+                .map((i) => `${i.path.join(".")}: ${i.message}`)
+                .join(", ")}`);
+        }
+        return parsed.data;
     }
-    async callVertexAPI(request) {
+    async callVertexAPI(_request) {
         throw new Error("Vertex AI client not implemented. Please configure the actual SDK.");
     }
-    parseVertexResponse(response, modelId) {
+    parseVertexResponse(_response, _modelId) {
         throw new Error("Response parsing not implemented");
     }
     static fromEnvironment() {
@@ -102,3 +110,26 @@ class VertexAIAdapter extends AIProvider_1.AIProvider {
     }
 }
 exports.VertexAIAdapter = VertexAIAdapter;
+VertexAIAdapter.VertexRequestSchema = zod_1.z
+    .object({
+    model: zod_1.z.string(),
+    contents: zod_1.z.array(zod_1.z.object({
+        role: zod_1.z.literal("user"),
+        parts: zod_1.z.array(zod_1.z.object({ text: zod_1.z.string() })),
+    })),
+    systemInstruction: zod_1.z
+        .object({
+        role: zod_1.z.literal("system"),
+        parts: zod_1.z.array(zod_1.z.object({ text: zod_1.z.string() })),
+    })
+        .optional(),
+    generationConfig: zod_1.z
+        .object({
+        temperature: zod_1.z.number().optional(),
+        maxOutputTokens: zod_1.z.number().optional(),
+        stopSequences: zod_1.z.array(zod_1.z.string()).optional(),
+    })
+        .partial()
+        .optional(),
+})
+    .passthrough();

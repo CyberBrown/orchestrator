@@ -5,7 +5,7 @@
  * Adapts the existing Supabase client code to work with the generalized framework.
  */
 
-import { createClient, SupabaseClient as SupabaseClientType } from '@supabase/supabase-js';
+import { createClient, SupabaseClient as SupabaseClientType } from "@supabase/supabase-js";
 import { DataClient } from "./DataClient";
 import type { DataQuery, DataResult } from "../../types/providers";
 
@@ -22,7 +22,7 @@ export interface SupabaseConfig {
  * Supabase Client Adapter
  */
 export class SupabaseClientAdapter extends DataClient {
-  private client: SupabaseClientType;
+  private client!: SupabaseClientType;
   private config: SupabaseConfig;
 
   constructor(config: SupabaseConfig) {
@@ -41,10 +41,7 @@ export class SupabaseClientAdapter extends DataClient {
   /**
    * Fetch multiple records
    */
-  async fetch<T = unknown>(
-    table: string,
-    query?: DataQuery,
-  ): Promise<DataResult<T[]>> {
+  async fetch<T = unknown>(table: string, query?: DataQuery): Promise<DataResult<T[]>> {
     try {
       this.validateTableName(table);
 
@@ -52,9 +49,7 @@ export class SupabaseClientAdapter extends DataClient {
       // It's sanitized by PostgREST, but should be constructed carefully by the calling action.
       const selectQuery = query?.select?.join(",") ?? "*";
 
-      let supabaseQuery = this.client
-        .from(table)
-        .select(selectQuery);
+      let supabaseQuery = this.client.from(table).select(selectQuery);
 
       // Apply filters
       if (query?.filters) {
@@ -79,10 +74,7 @@ export class SupabaseClientAdapter extends DataClient {
         supabaseQuery = supabaseQuery.limit(query.limit);
       }
       if (query?.offset !== undefined) {
-        supabaseQuery = supabaseQuery.range(
-          query.offset,
-          query.offset + (query.limit ?? 1000) - 1,
-        );
+        supabaseQuery = supabaseQuery.range(query.offset, query.offset + (query.limit ?? 1000) - 1);
       }
 
       // Execute query
@@ -104,29 +96,19 @@ export class SupabaseClientAdapter extends DataClient {
   /**
    * Fetch single record by ID
    */
-  async fetchById<T = unknown>(
-    table: string,
-    id: string | number,
-  ): Promise<DataResult<T>> {
+  async fetchById<T = unknown>(table: string, id: string | number): Promise<DataResult<T>> {
     try {
       this.validateTableName(table);
       this.validateId(id);
 
-      const { data, error } = await this.client
-        .from(table)
-        .select("*")
-        .eq("id", id)
-        .single();
+      const { data, error } = await this.client.from(table).select("*").eq("id", id).single();
 
       if (error) {
         return this.createErrorResult(error, error.code);
       }
 
       if (!data) {
-        return this.createErrorResult(
-          new Error(`Record not found: ${id}`),
-          "NOT_FOUND",
-        );
+        return this.createErrorResult(new Error(`Record not found: ${id}`), "NOT_FOUND");
       }
 
       return this.createSuccessResult(data as T);
@@ -145,10 +127,7 @@ export class SupabaseClientAdapter extends DataClient {
     try {
       this.validateTableName(table);
 
-      const { data: insertedData, error } = await this.client
-        .from(table)
-        .insert(data)
-        .select();
+      const { data: insertedData, error } = await this.client.from(table).insert(data).select();
 
       if (error) {
         return this.createErrorResult(error, error.code);
@@ -213,7 +192,7 @@ export class SupabaseClientAdapter extends DataClient {
   /**
    * Execute custom query
    */
-  async executeQuery<T = unknown>(query: unknown): Promise<DataResult<T>> {
+  async executeQuery<T = unknown>(_query: unknown): Promise<DataResult<T>> {
     try {
       // For security, raw query execution is disabled by default.
       // To enable it, this method must be implemented carefully.
@@ -227,8 +206,8 @@ export class SupabaseClientAdapter extends DataClient {
       // }
 
       throw new Error("Custom query execution not implemented for security reasons.");
-    } catch (error) {
-      return this.createErrorResult(error);
+    } catch (_e) {
+      return this.createErrorResult(_e);
     }
   }
 
@@ -240,15 +219,15 @@ export class SupabaseClientAdapter extends DataClient {
       // The Supabase client doesn't have a direct connection check.
       // We can infer connectivity by making a lightweight request.
       const { error } = await this.client
-        .from('__health_check_table_that_does_not_exist__') // A non-existent table
+        .from("__health_check_table_that_does_not_exist__") // A non-existent table
         .select("id")
         .limit(1);
 
       // If we get a 'relation does not exist' error, the connection is fine.
-      if (error && error.code === '42P01') {
+      if (error && error.code === "42P01") {
         return true;
       }
-      
+
       // If there's no error, it's also fine (though unlikely).
       if (!error) {
         return true;
@@ -256,7 +235,7 @@ export class SupabaseClientAdapter extends DataClient {
 
       // Any other error suggests a connection problem.
       return false;
-    } catch (e) {
+    } catch (_e) {
       return false;
     }
   }
@@ -285,7 +264,7 @@ export class SupabaseClientAdapter extends DataClient {
   /**
    * Get Supabase client instance (for advanced usage)
    */
-  getClient(): any {
+  getClient(): SupabaseClientType {
     return this.client;
   }
 }

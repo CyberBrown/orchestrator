@@ -38,7 +38,7 @@ export interface WorkflowContext<TData = Record<string, unknown>> {
 export interface WorkflowState<TData = Record<string, unknown>> {
     workflowId: string;
     status: WorkflowStatus;
-    currentStepId: string | null;
+    runningStepIds: string[];
     history: WorkflowHistoryEntry[];
     retryState?: RetryState;
     lastError?: {

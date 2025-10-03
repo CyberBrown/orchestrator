@@ -12,25 +12,18 @@ export interface WorkflowExecutionResult<TData = Record<string, unknown>> {
         completedAt: string;
         durationMs: number;
         stepsExecuted: number;
-        retriesPerformed: number;
     };
 }
 export interface WorkflowRunnerOptions extends OrchestratorOptions {
     maxExecutionTime?: number;
-    pollingIntervalMs?: number;
 }
-export declare class WorkflowRunner<TData = Record<string, unknown>> {
+export declare class WorkflowRunner<TData extends Record<string, unknown> = Record<string, unknown>> {
     private readonly orchestrator;
     private readonly dataClient?;
     private readonly maxExecutionTime;
-    private readonly pollingIntervalMs;
     private readonly logger;
     constructor(options: WorkflowRunnerOptions);
-    execute(workflow: WorkflowDefinition, initialContext: Partial<WorkflowContext<TData>>, config?: WorkflowExecutionConfig): Promise<WorkflowExecutionResult<TData>>;
-    resume(workflowId: string, workflow: WorkflowDefinition, updates?: Partial<WorkflowState<TData>>): Promise<WorkflowExecutionResult<TData>>;
-    private executeFromState;
-    private persistState;
+    execute(workflow: WorkflowDefinition, initialContext: Partial<WorkflowContext<TData>>, _config?: WorkflowExecutionConfig): Promise<WorkflowExecutionResult<TData>>;
     private generateWorkflowId;
-    private delay;
 }
 //# sourceMappingURL=WorkflowRunner.d.ts.map

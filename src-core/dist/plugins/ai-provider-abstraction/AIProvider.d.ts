@@ -22,4 +22,15 @@ export declare class AIProviderFactory {
     list(): string[];
     has(name: string): boolean;
 }
+export declare class MockAIProvider extends AIProvider {
+    readonly name = "mock-ai-provider";
+    readonly supportedModels: string[];
+    private seededResponses;
+    private defaultResponse;
+    generateContent(request: AIProviderRequest): Promise<AIProviderResponse>;
+    isAvailable(): Promise<boolean>;
+    seedResponse(prompt: string, response: string): void;
+    setDefaultResponse(response: string): void;
+    clear(): void;
+}
 //# sourceMappingURL=AIProvider.d.ts.map

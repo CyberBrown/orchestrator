@@ -15,6 +15,7 @@ export declare class VertexAIAdapter extends AIProvider {
     generateContent(request: AIProviderRequest): Promise<AIProviderResponse>;
     isAvailable(): Promise<boolean>;
     getConfig(): Record<string, unknown>;
+    private static readonly VertexRequestSchema;
     private prepareVertexRequest;
     private callVertexAPI;
     private parseVertexResponse;

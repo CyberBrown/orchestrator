@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AIProviderFactory = exports.AIProvider = void 0;
+exports.MockAIProvider = exports.AIProviderFactory = exports.AIProvider = void 0;
 class AIProvider {
     validateRequest(request) {
         if (!request.prompt || request.prompt.trim().length === 0) {
@@ -83,3 +83,40 @@ class AIProviderFactory {
     }
 }
 exports.AIProviderFactory = AIProviderFactory;
+class MockAIProvider extends AIProvider {
+    constructor() {
+        super(...arguments);
+        this.name = "mock-ai-provider";
+        this.supportedModels = ["mock-model-1", "mock-model-2"];
+        this.seededResponses = new Map();
+        this.defaultResponse = "This is a mock AI response.";
+    }
+    async generateContent(request) {
+        try {
+            this.validateRequest(request);
+            const content = this.seededResponses.get(request.prompt) ?? this.defaultResponse;
+            return this.createSuccessResponse(content, request.modelId ?? this.getDefaultModel(), {
+                promptTokens: request.prompt.length,
+                completionTokens: content.length,
+                totalTokens: request.prompt.length + content.length,
+            });
+        }
+        catch (error) {
+            return this.createErrorResponse(error, request.modelId);
+        }
+    }
+    async isAvailable() {
+        return true;
+    }
+    seedResponse(prompt, response) {
+        this.seededResponses.set(prompt, response);
+    }
+    setDefaultResponse(response) {
+        this.defaultResponse = response;
+    }
+    clear() {
+        this.seededResponses.clear();
+        this.defaultResponse = "This is a mock AI response.";
+    }
+}
+exports.MockAIProvider = MockAIProvider;

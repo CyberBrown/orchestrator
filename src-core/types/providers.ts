@@ -152,10 +152,7 @@ export interface DataClient {
    * @param query - Query parameters
    * @returns Query result
    */
-  fetch<T = unknown>(
-    table: string,
-    query?: DataQuery,
-  ): Promise<DataResult<T[]>>;
+  fetch<T = unknown>(table: string, query?: DataQuery): Promise<DataResult<T[]>>;
 
   /**
    * Fetch a single record by ID
@@ -163,10 +160,7 @@ export interface DataClient {
    * @param id - Record ID
    * @returns Single record result
    */
-  fetchById<T = unknown>(
-    table: string,
-    id: string | number,
-  ): Promise<DataResult<T>>;
+  fetchById<T = unknown>(table: string, id: string | number): Promise<DataResult<T>>;
 
   /**
    * Insert new data
@@ -174,10 +168,7 @@ export interface DataClient {
    * @param data - Data to insert
    * @returns Insert result
    */
-  insert<T = unknown>(
-    table: string,
-    data: Partial<T> | Partial<T>[],
-  ): Promise<DataResult<T | T[]>>;
+  insert<T = unknown>(table: string, data: Partial<T> | Partial<T>[]): Promise<DataResult<T | T[]>>;
 
   /**
    * Update existing data
@@ -186,11 +177,7 @@ export interface DataClient {
    * @param data - Data to update
    * @returns Update result
    */
-  update<T = unknown>(
-    table: string,
-    id: string | number,
-    data: Partial<T>,
-  ): Promise<DataResult<T>>;
+  update<T = unknown>(table: string, id: string | number, data: Partial<T>): Promise<DataResult<T>>;
 
   /**
    * Delete data

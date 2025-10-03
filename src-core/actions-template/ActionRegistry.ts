@@ -5,10 +5,7 @@
  * Allows dynamic registration and retrieval of actions.
  */
 
-import type {
-  Action,
-  ActionRegistry as IActionRegistry,
-} from "../types/action";
+import type { Action, ActionRegistry as IActionRegistry } from "../types/action";
 
 /**
  * Implementation of ActionRegistry

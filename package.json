@@ -7,8 +7,8 @@
     "prepare": "husky",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format:check": "prettier . --check",
-    "format": "prettier . --write",
+    "format:check": "prettier . --config prettier.config.cjs --check",
+    "format": "prettier . --config prettier.config.cjs --write",
     "prebuild": "pnpm run lint && pnpm run format:check",
     "build": "pnpm --filter @llm-orchestration/core run build"
   },

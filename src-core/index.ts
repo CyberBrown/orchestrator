@@ -12,11 +12,29 @@ export * from "./types";
 export * from "./orchestrator";
 
 // Plugins
-export * from "./plugins/ai-provider-abstraction";
-export * from "./plugins/data-abstraction";
+export {
+  AIProvider,
+  AIProviderFactory,
+  VertexAIAdapter,
+  type VertexAIConfig,
+} from "./plugins/ai-provider-abstraction";
+
+export {
+  DataClient,
+  MockDataClient,
+  SupabaseClientAdapter,
+  type SupabaseConfig,
+} from "./plugins/data-abstraction";
 
 // Actions
-export * from "./actions-template";
+export {
+  GenericAction,
+  GenericActionConfig,
+  DataFetchAction,
+  AIGenerationAction,
+  DataTransformAction,
+  ActionRegistry,
+} from "./actions-template";
 
 // Utilities
 export * from "./utils";

@@ -104,10 +104,7 @@ export interface ActionFactory {
    * @param actionId - ID of the action to create
    * @param config - Configuration for the action
    */
-  create(
-    actionId: string,
-    config?: Record<string, unknown>,
-  ): Action | undefined;
+  create(actionId: string, config?: Record<string, unknown>): Action | undefined;
 }
 
 /**

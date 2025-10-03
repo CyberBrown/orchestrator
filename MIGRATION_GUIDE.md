@@ -5,6 +5,7 @@ This guide helps you migrate from the existing Brand Kit orchestration system to
 ## Overview of Changes
 
 ### Before (Brand Kit Specific)
+
 ```typescript
 // lib/orchestrator.ts
 export interface BrandWorkflowState {
@@ -20,6 +21,7 @@ export interface BrandWorkflowState {
 ```
 
 ### After (Generalized)
+
 ```typescript
 // src-core/types/workflow.ts
 export interface WorkflowState<TData = Record<string, unknown>> {
@@ -33,12 +35,12 @@ export interface WorkflowState<TData = Record<string, unknown>> {
 
 ## Key Mapping
 
-| Old Concept | New Concept | Notes |
-|-------------|-------------|-------|
-| `task_id` | `workflowId` | Renamed for clarity |
-| `current_agent` | `currentStepId` | More generic terminology |
-| `data_payload` | `context` | Structured context object |
-| Agent | Action | Actions are more generic |
+| Old Concept             | New Concept        | Notes                     |
+| ----------------------- | ------------------ | ------------------------- |
+| `task_id`               | `workflowId`       | Renamed for clarity       |
+| `current_agent`         | `currentStepId`    | More generic terminology  |
+| `data_payload`          | `context`          | Structured context object |
+| Agent                   | Action             | Actions are more generic  |
 | `brand_summaries` table | Generic table name | Configurable per workflow |
 
 ## Step-by-Step Migration
@@ -46,19 +48,17 @@ export interface WorkflowState<TData = Record<string, unknown>> {
 ### 1. Update Workflow Configuration
 
 **Before:**
+
 ```json
 {
-  "sequence": [
-    "Agent1_Analyst",
-    "Agent2_BrandStrategist",
-    "Agent3_BrandConsultant"
-  ],
+  "sequence": ["Agent1_Analyst", "Agent2_BrandStrategist", "Agent3_BrandConsultant"],
   "error_handler": "Agent_Error_Logger",
   "success_handler": "Agent_Completion_Notifier"
 }
 ```
 
 **After:**
+
 ```json
 {
   "id": "brand-identity-workflow",
@@ -90,6 +90,7 @@ export interface WorkflowState<TData = Record<string, unknown>> {
 ### 2. Convert Agents to Actions
 
 **Before (Agent):**
+
 ```typescript
 // lib/agents/registry.ts
 Agent1_Analyst: {
@@ -103,29 +104,30 @@ Agent1_Analyst: {
 ```
 
 **After (Action):**
+
 ```typescript
 // your-project/actions/ResearchAction.ts
-import { GenericAction } from '@llm-orchestration/core';
+import { GenericAction } from "@llm-orchestration/core";
 
 export class ResearchAction extends GenericAction {
-  readonly id = 'research-action';
-  readonly name = 'Research & Analysis';
+  readonly id = "research-action";
+  readonly name = "Research & Analysis";
 
   async execute(input: ActionInput): Promise<StepExecutionResult> {
     try {
       const { brandName, brandUrl } = input.context.input;
-      
+
       // Fetch data
-      const data = await this.fetchData('brands', {
+      const data = await this.fetchData("brands", {
         name: brandName,
       });
-      
+
       // Generate research using AI
       const research = await this.generateContent(
         `Research brand: ${brandName} at ${brandUrl}`,
-        'You are a brand research analyst'
+        "You are a brand research analyst",
       );
-      
+
       return this.createSuccessResult({ research, data });
     } catch (error) {
       return this.createErrorResult(error as Error);
@@ -137,21 +139,20 @@ export class ResearchAction extends GenericAction {
 ### 3. Update Database Interactions
 
 **Before:**
+
 ```typescript
 // app/actions/brand-kit/generate-attribute-summary.ts
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from "@/lib/supabase/server";
 
 const supabase = createClient();
-const { data } = await supabase
-  .from('brand_attributes')
-  .select('*')
-  .eq('user_id', userId);
+const { data } = await supabase.from("brand_attributes").select("*").eq("user_id", userId);
 ```
 
 **After:**
+
 ```typescript
 // Use DataClient abstraction
-const attributes = await this.fetchData('brand_attributes', {
+const attributes = await this.fetchData("brand_attributes", {
   user_id: userId,
 });
 ```
@@ -159,59 +160,59 @@ const attributes = await this.fetchData('brand_attributes', {
 ### 4. Update AI Provider Calls
 
 **Before:**
+
 ```typescript
 // Direct Vertex AI call
-import { VertexAIProvider } from '@/lib/ai-providers/vertex-ai';
+import { VertexAIProvider } from "@/lib/ai-providers/vertex-ai";
 
 const provider = new VertexAIProvider();
 const response = await provider.generateContent({
   prompt: myPrompt,
-  modelId: 'gemini-1.5-pro',
+  modelId: "gemini-1.5-pro",
 });
 ```
 
 **After:**
+
 ```typescript
 // Use AIProvider abstraction
-const content = await this.generateContent(
-  myPrompt,
-  systemInstruction,
-  {
-    modelId: 'gemini-1.5-pro',
-    temperature: 0.7,
-  }
-);
+const content = await this.generateContent(myPrompt, systemInstruction, {
+  modelId: "gemini-1.5-pro",
+  temperature: 0.7,
+});
 ```
 
 ### 5. Update State Management
 
 **Before:**
+
 ```typescript
 const state: BrandWorkflowState = {
-  task_id: 'task-123',
-  status: 'in_progress',
-  current_agent: 'Agent1_Analyst',
+  task_id: "task-123",
+  status: "in_progress",
+  current_agent: "Agent1_Analyst",
   data_payload: {
-    brandName: 'Acme Corp',
-    research: { content: '...', approved: false },
+    brandName: "Acme Corp",
+    research: { content: "...", approved: false },
   },
 };
 ```
 
 **After:**
+
 ```typescript
 const state: WorkflowState = {
-  workflowId: 'wf-123',
-  status: 'in_progress',
-  currentStepId: 'analyst',
+  workflowId: "wf-123",
+  status: "in_progress",
+  currentStepId: "analyst",
   context: {
-    workflowId: 'wf-123',
-    userId: 'user-123',
+    workflowId: "wf-123",
+    userId: "user-123",
     input: {
-      brandName: 'Acme Corp',
+      brandName: "Acme Corp",
     },
     outputs: {
-      analyst: { research: '...', approved: false },
+      analyst: { research: "...", approved: false },
     },
     sharedState: {},
   },
@@ -241,20 +242,18 @@ If you need to maintain backward compatibility, create adapter actions:
 export class BrandKitAgentAdapter extends GenericAction {
   constructor(
     private agentDefinition: AgentDefinition,
-    config: GenericActionConfig
+    config: GenericActionConfig,
   ) {
     super(config);
   }
 
   async execute(input: ActionInput): Promise<StepExecutionResult> {
     // Convert new format to old format
-    const oldPayload = this.agentDefinition.buildPayload?.(
-      this.convertToOldState(input)
-    );
-    
+    const oldPayload = this.agentDefinition.buildPayload?.(this.convertToOldState(input));
+
     // Execute using old logic
     // ...
-    
+
     // Convert result back to new format
     return this.createSuccessResult(result);
   }
@@ -277,13 +276,17 @@ export class BrandKitAgentAdapter extends GenericAction {
 ## Common Issues
 
 ### Issue: "Action not found"
+
 **Solution**: Ensure all actions are registered before executing workflow:
+
 ```typescript
 actionRegistry.register(new ResearchAction({ dataClient, aiProvider }));
 ```
 
 ### Issue: "Previous step output not found"
+
 **Solution**: Check step dependencies in workflow configuration:
+
 ```json
 {
   "stepId": "step-2",
@@ -292,14 +295,17 @@ actionRegistry.register(new ResearchAction({ dataClient, aiProvider }));
 ```
 
 ### Issue: "DataClient not configured"
+
 **Solution**: Pass dataClient when creating actions:
+
 ```typescript
-new MyAction({ dataClient, aiProvider })
+new MyAction({ dataClient, aiProvider });
 ```
 
 ## Support
 
 For questions or issues during migration:
+
 - Check the [README](./src-core/README.md)
 - Review [examples](./tests/core-flow.test.ts)
 - Open an issue on GitHub
@@ -307,6 +313,7 @@ For questions or issues during migration:
 ## Timeline
 
 Recommended migration approach:
+
 1. **Week 1**: Set up new framework alongside existing code
 2. **Week 2**: Migrate one workflow as proof of concept
 3. **Week 3**: Migrate remaining workflows

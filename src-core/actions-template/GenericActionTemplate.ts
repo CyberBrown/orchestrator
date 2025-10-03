@@ -5,8 +5,9 @@
  * Provides common patterns and structure for action implementation.
  */
 
-import { z } from 'zod';
-import type { Action, ActionInput, StepExecutionResult } from "../types/action";
+import { z } from "zod";
+import type { Action, ActionInput } from "../types/action";
+import type { StepExecutionResult } from "../types/workflow";
 import type { DataClient, AIProvider } from "../types/providers";
 
 /**
@@ -27,10 +28,8 @@ export interface GenericActionConfig {
  * Abstract base class for actions
  * Provides common functionality and structure
  */
-export abstract class GenericAction<
-  TInput = Record<string, unknown>,
-  TOutput = unknown,
-> implements Action<TInput, TOutput>
+export abstract class GenericAction<TInput = Record<string, unknown>, TOutput = unknown>
+  implements Action<TInput, TOutput>
 {
   abstract readonly id: string;
   abstract readonly name: string;
@@ -69,9 +68,7 @@ export abstract class GenericAction<
       return { valid: true };
     }
 
-    const errors = result.error.errors.map(
-      (e) => `${e.path.join('.') || 'input'}: ${e.message}`
-    );
+    const errors = result.error.errors.map((e) => `${e.path.join(".") || "input"}: ${e.message}`);
 
     return {
       valid: false,
@@ -82,9 +79,7 @@ export abstract class GenericAction<
   /**
    * @deprecated This method is deprecated. Use the `inputSchema` property with a Zod schema for validation.
    */
-  protected async customValidation(
-    input: ActionInput<TInput>,
-  ): Promise<string[]> {
+  protected async customValidation(_input: ActionInput<TInput>): Promise<string[]> {
     return [];
   }
 
@@ -118,10 +113,7 @@ export abstract class GenericAction<
   /**
    * Helper: Save data to database
    */
-  protected async saveData<T = unknown>(
-    table: string,
-    data: Partial<T>,
-  ): Promise<T> {
+  protected async saveData<T = unknown>(table: string, data: Partial<T>): Promise<T> {
     if (!this.dataClient) {
       throw new Error("DataClient not configured for this action");
     }
@@ -200,9 +192,7 @@ export abstract class GenericAction<
   /**
    * Helper: Get all previous outputs
    */
-  protected getAllPreviousOutputs(
-    input: ActionInput<TInput>,
-  ): Record<string, unknown> {
+  protected getAllPreviousOutputs(input: ActionInput<TInput>): Record<string, unknown> {
     return input.context.outputs;
   }
 
@@ -339,10 +329,7 @@ export class DataTransformAction extends GenericAction<
       const sourceData = this.getPreviousOutput(input, sourceStepId);
 
       if (!sourceData) {
-        return this.createErrorResult(
-          `No output found from step: ${sourceStepId}`,
-          false,
-        );
+        return this.createErrorResult(`No output found from step: ${sourceStepId}`, false);
       }
 
       // Apply transformation (simplified example)

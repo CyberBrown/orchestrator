@@ -149,9 +149,7 @@ const aiProvider = VertexAIAdapter.fromEnvironment();
 const dataClient = SupabaseClientAdapter.fromEnvironment();
 
 // Register actions
-actionRegistry.register(
-  new ContentGenerationAction({ aiProvider, dataClient }),
-);
+actionRegistry.register(new ContentGenerationAction({ aiProvider, dataClient }));
 // ... register other actions
 
 // Load workflow
@@ -237,9 +235,7 @@ class OpenAIAdapter extends AIProvider {
   readonly name = "openai";
   readonly supportedModels = ["gpt-4", "gpt-3.5-turbo"];
 
-  async generateContent(
-    request: AIProviderRequest,
-  ): Promise<AIProviderResponse> {
+  async generateContent(request: AIProviderRequest): Promise<AIProviderResponse> {
     // Implementation
   }
 
@@ -323,10 +319,7 @@ GCP_LOCATION=us-central1
 The framework includes mock implementations for testing:
 
 ```typescript
-import {
-  MockDataClient,
-  ActionRegistry,
-} from "@your-org/llm-orchestration-framework";
+import { MockDataClient, ActionRegistry } from "@your-org/llm-orchestration-framework";
 
 describe("My Workflow", () => {
   it("should execute successfully", async () => {

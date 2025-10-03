@@ -35,6 +35,8 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WorkflowLoader = void 0;
 exports.loadWorkflow = loadWorkflow;
+const zod_1 = require("zod");
+const schemas_1 = require("../types/schemas");
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 class WorkflowLoader {
@@ -45,9 +47,7 @@ class WorkflowLoader {
     }
     async loadFromFile(filePath) {
         try {
-            const fullPath = path.isAbsolute(filePath)
-                ? filePath
-                : path.join(this.baseDir, filePath);
+            const fullPath = path.isAbsolute(filePath) ? filePath : path.join(this.baseDir, filePath);
             const content = await fs.promises.readFile(fullPath, "utf-8");
             const json = JSON.parse(content);
             const substituted = this.substituteEnvVars(json);
@@ -99,77 +99,22 @@ class WorkflowLoader {
         return obj;
     }
     validateWorkflow(workflow) {
-        if (!workflow || typeof workflow !== "object") {
-            throw new Error("Workflow must be an object");
+        try {
+            schemas_1.WorkflowDefinitionSchema.parse(workflow);
         }
-        const w = workflow;
-        if (!w.id || typeof w.id !== "string") {
-            throw new Error('Workflow must have an "id" field');
-        }
-        if (!w.name || typeof w.name !== "string") {
-            throw new Error('Workflow must have a "name" field');
-        }
-        if (!Array.isArray(w.steps) || w.steps.length === 0) {
-            throw new Error("Workflow must have at least one step");
-        }
-        const stepIds = new Set();
-        for (const step of w.steps) {
-            this.validateStep(step, stepIds);
-            stepIds.add(step.stepId);
-        }
-        for (const step of w.steps) {
-            const s = step;
-            if (s.dependencies) {
-                for (const depId of s.dependencies) {
-                    if (!stepIds.has(depId)) {
-                        throw new Error(`Step ${s.stepId} depends on non-existent step: ${depId}`);
-                    }
-                }
+        catch (error) {
+            if (error instanceof zod_1.z.ZodError) {
+                const errorMessages = error.errors
+                    .map((e) => `(${e.path.join(".")}) ${e.message}`)
+                    .join("; ");
+                throw new Error(`Workflow validation failed: ${errorMessages}`);
             }
-        }
-        if (w.errorHandler && typeof w.errorHandler !== "string") {
-            throw new Error("errorHandler must be a string");
-        }
-        if (w.successHandler && typeof w.successHandler !== "string") {
-            throw new Error("successHandler must be a string");
-        }
-        if (w.deadLetterHandler && typeof w.deadLetterHandler !== "string") {
-            throw new Error("deadLetterHandler must be a string");
-        }
-    }
-    validateStep(step, existingStepIds) {
-        if (!step || typeof step !== "object") {
-            throw new Error("Step must be an object");
-        }
-        const s = step;
-        if (!s.stepId || typeof s.stepId !== "string") {
-            throw new Error('Step must have a "stepId" field');
-        }
-        if (existingStepIds.has(s.stepId)) {
-            throw new Error(`Duplicate step ID: ${s.stepId}`);
-        }
-        if (!s.actionName || typeof s.actionName !== "string") {
-            throw new Error(`Step ${s.stepId} must have an "actionName" field`);
-        }
-        if (s.dependencies && !Array.isArray(s.dependencies)) {
-            throw new Error(`Step ${s.stepId} dependencies must be an array`);
-        }
-        if (s.maxRetries !== undefined) {
-            if (typeof s.maxRetries !== "number" || s.maxRetries < 0) {
-                throw new Error(`Step ${s.stepId} maxRetries must be a non-negative number`);
-            }
-        }
-        if (s.timeout !== undefined) {
-            if (typeof s.timeout !== "number" || s.timeout < 1000) {
-                throw new Error(`Step ${s.stepId} timeout must be at least 1000ms`);
-            }
+            throw error;
         }
     }
     async saveToFile(workflow, filePath) {
         try {
-            const fullPath = path.isAbsolute(filePath)
-                ? filePath
-                : path.join(this.baseDir, filePath);
+            const fullPath = path.isAbsolute(filePath) ? filePath : path.join(this.baseDir, filePath);
             const json = JSON.stringify(workflow, null, 2);
             await fs.promises.writeFile(fullPath, json, "utf-8");
         }

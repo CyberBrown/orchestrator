@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DataTransformAction = exports.AIGenerationAction = exports.DataFetchAction = exports.GenericAction = void 0;
+const zod_1 = require("zod");
 class GenericAction {
     constructor(config = {}) {
         this.config = config;
@@ -8,20 +9,20 @@ class GenericAction {
         this.aiProvider = config.aiProvider;
     }
     async validate(input) {
-        const errors = [];
-        if (!input.context) {
-            errors.push("Context is required");
+        if (!this.inputSchema) {
+            return { valid: true };
         }
-        const customErrors = await this.customValidation(input);
-        if (customErrors.length > 0) {
-            errors.push(...customErrors);
+        const result = this.inputSchema.safeParse(input.context.input);
+        if (result.success) {
+            return { valid: true };
         }
+        const errors = result.error.errors.map((e) => `${e.path.join(".") || "input"}: ${e.message}`);
         return {
-            valid: errors.length === 0,
-            errors: errors.length > 0 ? errors : undefined,
+            valid: false,
+            errors,
         };
     }
-    async customValidation(input) {
+    async customValidation(_input) {
         return [];
     }
     async cleanup() {
@@ -104,13 +105,14 @@ class DataFetchAction extends GenericAction {
         this.id = "data-fetch";
         this.name = "Data Fetch Action";
         this.description = "Fetches data from a specified table";
+        this.inputSchema = zod_1.z.object({
+            table: zod_1.z.string().min(1, "Table name is required"),
+            filters: zod_1.z.record(zod_1.z.unknown()).optional(),
+        });
     }
     async execute(input) {
         try {
             const { table, filters } = input.context.input;
-            if (!table) {
-                return this.createErrorResult("Table name is required", false);
-            }
             const data = await this.fetchData(table, filters);
             return this.createSuccessResult(data, {
                 recordCount: data.length,

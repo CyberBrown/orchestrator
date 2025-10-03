@@ -51,7 +51,7 @@ export interface WorkflowRunnerOptions extends OrchestratorOptions {
 /**
  * WorkflowRunner class
  */
-export class WorkflowRunner<TData = Record<string, unknown>> {
+export class WorkflowRunner<TData extends Record<string, unknown> = Record<string, unknown>> {
   private readonly orchestrator: Orchestrator<TData>;
   private readonly dataClient?: DataClient;
   private readonly maxExecutionTime: number;
@@ -70,7 +70,7 @@ export class WorkflowRunner<TData = Record<string, unknown>> {
   async execute(
     workflow: WorkflowDefinition,
     initialContext: Partial<WorkflowContext<TData>>,
-    config?: WorkflowExecutionConfig,
+    _config?: WorkflowExecutionConfig,
   ): Promise<WorkflowExecutionResult<TData>> {
     const startTime = Date.now();
     const workflowId = initialContext.workflowId ?? this.generateWorkflowId();
@@ -98,7 +98,10 @@ export class WorkflowRunner<TData = Record<string, unknown>> {
         const elapsed = Date.now() - startTime;
         if (elapsed > this.maxExecutionTime) {
           state.status = "timed_out";
-          state.lastError = { message: "Workflow execution timed out", type: "TIMEOUT" };
+          state.lastError = {
+            message: "Workflow execution timed out",
+            type: "TIMEOUT",
+          };
           break;
         }
 
@@ -112,8 +115,10 @@ export class WorkflowRunner<TData = Record<string, unknown>> {
         }
 
         if (nextAction.stepIds && nextAction.stepIds.length > 0) {
-          const stepPromises = nextAction.stepIds.map(stepId =>
-            this.orchestrator.executeStep(state, workflow, stepId).then(result => ({ stepId, result }))
+          const stepPromises = nextAction.stepIds.map((stepId) =>
+            this.orchestrator
+              .executeStep(state, workflow, stepId)
+              .then((result) => ({ stepId, result })),
           );
 
           const results = await Promise.all(stepPromises);
@@ -127,10 +132,12 @@ export class WorkflowRunner<TData = Record<string, unknown>> {
             } else {
               batchFailed = true;
               state.lastError = result.error;
-              this.orchestrator.appendHistory(state, stepId, "failed", { error: result.error });
+              this.orchestrator.appendHistory(state, stepId, "failed", {
+                error: result.error,
+              });
               // In a parallel execution, we fail the entire workflow if one step fails.
               // More sophisticated strategies could be implemented in the future.
-              break; 
+              break;
             }
           }
 
@@ -162,7 +169,10 @@ export class WorkflowRunner<TData = Record<string, unknown>> {
         },
       };
     } catch (error) {
-      this.logger?.error("Workflow execution failed unexpectedly", { workflowId, error });
+      this.logger?.error("Workflow execution failed unexpectedly", {
+        workflowId,
+        error,
+      });
       // ... error handling ...
       throw error;
     }

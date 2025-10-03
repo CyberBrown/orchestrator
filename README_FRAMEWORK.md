@@ -20,7 +20,9 @@ This repository contains a **completely refactored and generalized** LLM orchest
 ## 🎯 What's Inside
 
 ### Core Framework (`src-core/`)
+
 The generalized orchestration framework with:
+
 - Orchestration engine with state management
 - Pluggable AI provider abstraction (Vertex AI included)
 - Pluggable data client abstraction (Supabase included)
@@ -29,6 +31,7 @@ The generalized orchestration framework with:
 - Comprehensive TypeScript types
 
 ### Documentation
+
 - **[README.md](src-core/README.md)** - Complete framework documentation
 - **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick API reference
 - **[EXAMPLE_USAGE.md](EXAMPLE_USAGE.md)** - Complete working example
@@ -36,6 +39,7 @@ The generalized orchestration framework with:
 - **[FRAMEWORK_SUMMARY.md](FRAMEWORK_SUMMARY.md)** - Implementation overview
 
 ### Testing
+
 - **[tests/core-flow.test.ts](tests/core-flow.test.ts)** - Integration tests
 
 ## 🚀 Quick Start
@@ -80,18 +84,19 @@ See [EXAMPLE_USAGE.md](EXAMPLE_USAGE.md) for a complete blog generation workflow
 
 Start here based on your needs:
 
-| I want to... | Read this |
-|--------------|-----------|
-| Understand the framework | [src-core/README.md](src-core/README.md) |
-| Get started quickly | [QUICK_REFERENCE.md](QUICK_REFERENCE.md) |
-| See a complete example | [EXAMPLE_USAGE.md](EXAMPLE_USAGE.md) |
-| Migrate existing code | [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) |
-| Understand the architecture | [FRAMEWORK_SUMMARY.md](FRAMEWORK_SUMMARY.md) |
-| Check deliverables | [DELIVERABLES_CHECKLIST.md](DELIVERABLES_CHECKLIST.md) |
+| I want to...                | Read this                                              |
+| --------------------------- | ------------------------------------------------------ |
+| Understand the framework    | [src-core/README.md](src-core/README.md)               |
+| Get started quickly         | [QUICK_REFERENCE.md](QUICK_REFERENCE.md)               |
+| See a complete example      | [EXAMPLE_USAGE.md](EXAMPLE_USAGE.md)                   |
+| Migrate existing code       | [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)               |
+| Understand the architecture | [FRAMEWORK_SUMMARY.md](FRAMEWORK_SUMMARY.md)           |
+| Check deliverables          | [DELIVERABLES_CHECKLIST.md](DELIVERABLES_CHECKLIST.md) |
 
 ## 💡 Key Features
 
 ### Configuration-Driven Workflows
+
 ```json
 {
   "id": "my-workflow",
@@ -104,6 +109,7 @@ Start here based on your needs:
 ```
 
 ### Pluggable Architecture
+
 ```typescript
 // Swap AI providers easily
 const aiProvider = new VertexAIAdapter(config);
@@ -115,11 +121,12 @@ const dataClient = new SupabaseClientAdapter(config);
 ```
 
 ### Type-Safe Actions
+
 ```typescript
 class MyAction extends GenericAction {
   async execute(input: ActionInput): Promise<StepExecutionResult> {
-    const data = await this.fetchData('table');
-    const result = await this.generateContent('prompt');
+    const data = await this.fetchData("table");
+    const result = await this.generateContent("prompt");
     return this.createSuccessResult(result);
   }
 }
@@ -128,12 +135,14 @@ class MyAction extends GenericAction {
 ## 🏗️ Architecture
 
 ### Before (Brand Kit Specific)
+
 - Hard-coded workflow sequences
 - Direct Supabase and Vertex AI calls
 - Brand-specific state management
 - Tightly coupled business logic
 
 ### After (Generalized Framework)
+
 - JSON-defined workflows
 - Abstract provider interfaces
 - Generic state management
@@ -141,15 +150,15 @@ class MyAction extends GenericAction {
 
 ## 📊 Project Statistics
 
-| Metric | Value |
-|--------|-------|
-| Total Lines | 7,000+ |
-| Core Framework | 2,000+ lines |
-| Documentation | 4,000+ lines |
-| Type Definitions | 600+ lines |
-| Tests | 400+ lines |
-| Files Created | 29+ |
-| Documentation Files | 6 |
+| Metric              | Value        |
+| ------------------- | ------------ |
+| Total Lines         | 7,000+       |
+| Core Framework      | 2,000+ lines |
+| Documentation       | 4,000+ lines |
+| Type Definitions    | 600+ lines   |
+| Tests               | 400+ lines   |
+| Files Created       | 29+          |
+| Documentation Files | 6            |
 
 ## 🧪 Testing
 
@@ -157,13 +166,13 @@ The framework includes comprehensive integration tests:
 
 ```typescript
 // tests/core-flow.test.ts
-it('should execute a 3-step workflow successfully', async () => {
+it("should execute a 3-step workflow successfully", async () => {
   const result = await runner.execute(workflow, { input: {} });
-  
+
   expect(result.success).toBe(true);
-  expect(result.state.context.outputs['step-1']).toBeDefined();
-  expect(result.state.context.outputs['step-2']).toBeDefined();
-  expect(result.state.context.outputs['step-3']).toBeDefined();
+  expect(result.state.context.outputs["step-1"]).toBeDefined();
+  expect(result.state.context.outputs["step-2"]).toBeDefined();
+  expect(result.state.context.outputs["step-3"]).toBeDefined();
 });
 ```
 
@@ -223,9 +232,10 @@ The framework is perfect for:
 ## 🔧 Extensibility
 
 ### Add a New AI Provider
+
 ```typescript
 class OpenAIAdapter extends AIProvider {
-  readonly name = 'openai';
+  readonly name = "openai";
   async generateContent(request: AIProviderRequest) {
     // Implementation
   }
@@ -233,6 +243,7 @@ class OpenAIAdapter extends AIProvider {
 ```
 
 ### Add a New Data Client
+
 ```typescript
 class MongoDBAdapter extends DataClient {
   async fetch<T>(table: string, query?: DataQuery) {
@@ -242,9 +253,10 @@ class MongoDBAdapter extends DataClient {
 ```
 
 ### Create Custom Actions
+
 ```typescript
 class CustomAction extends GenericAction {
-  readonly id = 'custom-action';
+  readonly id = "custom-action";
   async execute(input: ActionInput) {
     // Your logic
   }
@@ -276,7 +288,7 @@ class CustomAction extends GenericAction {
 **Version**: 1.0.0  
 **Quality**: Production-grade  
 **Documentation**: Comprehensive  
-**Testing**: Complete  
+**Testing**: Complete
 
 ## 🎓 Learning Path
 
@@ -294,7 +306,7 @@ class CustomAction extends GenericAction {
 ✅ Comprehensive documentation  
 ✅ Production-ready quality  
 ✅ Complete test coverage  
-✅ Migration guide provided  
+✅ Migration guide provided
 
 ## 📄 License
 
@@ -306,10 +318,48 @@ This framework was created by refactoring and generalizing the original Brand Ki
 
 ---
 
-**Ready to get started?** 
+**Ready to get started?**
 
 👉 Begin with [src-core/README.md](src-core/README.md) for the complete guide!
 
 ---
 
-*Built with ❤️ for the AI development community*
+_Built with ❤️ for the AI development community_
+
+---
+
+## 🧹 Linting & Formatting
+
+This repository enforces code quality at both commit-time and build-time to keep the SDK consistent and consumer-friendly.
+
+- Commit-time: Husky runs lint-staged, which executes ESLint first, then Prettier on staged files. Commits are blocked on failures.
+- Build-time: The root `prebuild` script runs `eslint` then `prettier --check` before compiling. Fails fast on issues.
+
+Tooling and configs:
+
+- ESLint flat config: `eslint.config.mts` (with `eslint-config-prettier` at the end to avoid conflicts with Prettier)
+- Prettier config: `prettier.config.cjs` (canonical; CLI forced to use this config)
+- Pre-commit hook: `.husky/pre-commit`
+- Staged file runner: `lint-staged.config.js`
+
+Rule policy tailored for a plugin/SDK:
+
+- `@typescript-eslint/no-explicit-any`
+  - Global: "warn" to encourage strong typing for exported/public API.
+  - Adapters/boundaries (`src-core/plugins/**`, `src-core/orchestrator/**`): turned "off" where third-party/dynamic payloads are expected.
+  - Prefer `unknown` + runtime validation (e.g., Zod) or generics on the public surface.
+
+- `@typescript-eslint/no-unused-vars`
+  - "warn" with underscore convention: underscore-prefixed vars/args/caught errors are ignored. Use `_arg`, `_err` for required but unused parameters.
+
+Common commands:
+
+- Format all: `pnpm run format`
+- Check format: `pnpm run format:check`
+- Lint: `pnpm run lint`
+- Lint fix: `pnpm run lint:fix`
+
+Rationale:
+
+- Keep the public API strict so consumers get the best type help and fewer surprises.
+- Reduce false positives in integration layers that must accept loosely typed data from providers.

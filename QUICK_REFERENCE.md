@@ -17,7 +17,7 @@ import {
   VertexAIAdapter,
   SupabaseClientAdapter,
   loadWorkflow,
-} from '@llm-orchestration/core';
+} from "@llm-orchestration/core";
 
 // Setup
 const aiProvider = VertexAIAdapter.fromEnvironment();
@@ -28,7 +28,7 @@ const actionRegistry = new ActionRegistry();
 actionRegistry.register(new MyAction({ aiProvider, dataClient }));
 
 // Load and execute
-const workflow = await loadWorkflow('./workflow.json');
+const workflow = await loadWorkflow("./workflow.json");
 const runner = new WorkflowRunner({ actionRegistry, dataClient });
 const result = await runner.execute(workflow, { input: {} });
 ```
@@ -36,6 +36,7 @@ const result = await runner.execute(workflow, { input: {} });
 ## 🎯 Core Concepts
 
 ### Workflow Definition
+
 ```json
 {
   "id": "my-workflow",
@@ -52,10 +53,11 @@ const result = await runner.execute(workflow, { input: {} });
 ```
 
 ### Action Implementation
+
 ```typescript
 class MyAction extends GenericAction {
-  readonly id = 'my-action';
-  readonly name = 'My Action';
+  readonly id = "my-action";
+  readonly name = "My Action";
 
   async execute(input: ActionInput): Promise<StepExecutionResult> {
     // Your logic
@@ -67,53 +69,56 @@ class MyAction extends GenericAction {
 ## 🔧 Common Patterns
 
 ### Fetch Data
+
 ```typescript
-const data = await this.fetchData('table_name', {
-  filters: { user_id: userId }
+const data = await this.fetchData("table_name", {
+  filters: { user_id: userId },
 });
 ```
 
 ### Generate AI Content
+
 ```typescript
-const content = await this.generateContent(
-  'Your prompt here',
-  'System instruction',
-  { temperature: 0.7, maxTokens: 1000 }
-);
+const content = await this.generateContent("Your prompt here", "System instruction", {
+  temperature: 0.7,
+  maxTokens: 1000,
+});
 ```
 
 ### Save Data
+
 ```typescript
-const saved = await this.saveData('table_name', {
-  field1: 'value1',
-  field2: 'value2'
+const saved = await this.saveData("table_name", {
+  field1: "value1",
+  field2: "value2",
 });
 ```
 
 ### Get Previous Output
+
 ```typescript
-const previousData = this.getPreviousOutput(input, 'previous-step-id');
+const previousData = this.getPreviousOutput(input, "previous-step-id");
 ```
 
 ### Create Success Result
+
 ```typescript
-return this.createSuccessResult(
-  { result: 'data' },
-  { metadata: 'value' }
-);
+return this.createSuccessResult({ result: "data" }, { metadata: "value" });
 ```
 
 ### Create Error Result
+
 ```typescript
 return this.createErrorResult(
-  'Error message',
-  true // retryable
+  "Error message",
+  true, // retryable
 );
 ```
 
 ## 📊 Workflow Configuration
 
 ### Basic Step
+
 ```json
 {
   "stepId": "my-step",
@@ -123,6 +128,7 @@ return this.createErrorResult(
 ```
 
 ### Step with Dependencies
+
 ```json
 {
   "stepId": "step-2",
@@ -132,6 +138,7 @@ return this.createErrorResult(
 ```
 
 ### Step with Config
+
 ```json
 {
   "stepId": "ai-step",
@@ -144,6 +151,7 @@ return this.createErrorResult(
 ```
 
 ### Step with Retry
+
 ```json
 {
   "stepId": "api-step",
@@ -154,6 +162,7 @@ return this.createErrorResult(
 ```
 
 ### Human Review Step
+
 ```json
 {
   "stepId": "review",
@@ -165,11 +174,12 @@ return this.createErrorResult(
 ## 🔌 Provider Setup
 
 ### Vertex AI
+
 ```typescript
 const aiProvider = new VertexAIAdapter({
-  projectId: 'your-project',
-  location: 'us-central1',
-  defaultModel: 'gemini-1.5-pro'
+  projectId: "your-project",
+  location: "us-central1",
+  defaultModel: "gemini-1.5-pro",
 });
 
 // Or from environment
@@ -177,10 +187,11 @@ const aiProvider = VertexAIAdapter.fromEnvironment();
 ```
 
 ### Supabase
+
 ```typescript
 const dataClient = new SupabaseClientAdapter({
-  url: 'https://your-project.supabase.co',
-  anonKey: 'your-key'
+  url: "https://your-project.supabase.co",
+  anonKey: "your-key",
 });
 
 // Or from environment
@@ -188,21 +199,21 @@ const dataClient = SupabaseClientAdapter.fromEnvironment();
 ```
 
 ### Mock (Testing)
+
 ```typescript
 const dataClient = new MockDataClient();
-dataClient.seed('users', [
-  { id: '1', name: 'Test' }
-]);
+dataClient.seed("users", [{ id: "1", name: "Test" }]);
 ```
 
 ## 🧪 Testing
 
 ### Basic Test
-```typescript
-import { describe, it, expect } from 'vitest';
 
-describe('My Workflow', () => {
-  it('should execute successfully', async () => {
+```typescript
+import { describe, it, expect } from "vitest";
+
+describe("My Workflow", () => {
+  it("should execute successfully", async () => {
     const result = await runner.execute(workflow, { input: {} });
     expect(result.success).toBe(true);
   });
@@ -210,11 +221,12 @@ describe('My Workflow', () => {
 ```
 
 ### Test with Mocks
+
 ```typescript
 const dataClient = new MockDataClient();
 const actionRegistry = new ActionRegistry();
 
-dataClient.seed('test_data', [{ id: '1' }]);
+dataClient.seed("test_data", [{ id: "1" }]);
 actionRegistry.register(new TestAction({ dataClient }));
 
 const runner = new WorkflowRunner({ actionRegistry, dataClient });
@@ -224,13 +236,14 @@ const result = await runner.execute(workflow, { input: {} });
 ## 🎨 Action Templates
 
 ### Data Fetch Action
+
 ```typescript
 class FetchAction extends GenericAction {
-  readonly id = 'fetch-action';
-  
+  readonly id = "fetch-action";
+
   async execute(input: ActionInput): Promise<StepExecutionResult> {
-    const data = await this.fetchData('table', {
-      filters: input.context.input
+    const data = await this.fetchData("table", {
+      filters: input.context.input,
     });
     return this.createSuccessResult(data);
   }
@@ -238,10 +251,11 @@ class FetchAction extends GenericAction {
 ```
 
 ### AI Generation Action
+
 ```typescript
 class GenerateAction extends GenericAction {
-  readonly id = 'generate-action';
-  
+  readonly id = "generate-action";
+
   async execute(input: ActionInput): Promise<StepExecutionResult> {
     const prompt = this.buildPrompt(input.context.input);
     const content = await this.generateContent(prompt);
@@ -251,12 +265,13 @@ class GenerateAction extends GenericAction {
 ```
 
 ### Transform Action
+
 ```typescript
 class TransformAction extends GenericAction {
-  readonly id = 'transform-action';
-  
+  readonly id = "transform-action";
+
   async execute(input: ActionInput): Promise<StepExecutionResult> {
-    const data = this.getPreviousOutput(input, 'previous-step');
+    const data = this.getPreviousOutput(input, "previous-step");
     const transformed = this.transform(data);
     return this.createSuccessResult(transformed);
   }
@@ -264,13 +279,14 @@ class TransformAction extends GenericAction {
 ```
 
 ### Save Action
+
 ```typescript
 class SaveAction extends GenericAction {
-  readonly id = 'save-action';
-  
+  readonly id = "save-action";
+
   async execute(input: ActionInput): Promise<StepExecutionResult> {
-    const data = this.getPreviousOutput(input, 'generate-step');
-    const saved = await this.saveData('results', data);
+    const data = this.getPreviousOutput(input, "generate-step");
+    const saved = await this.saveData("results", data);
     return this.createSuccessResult(saved);
   }
 }
@@ -279,6 +295,7 @@ class SaveAction extends GenericAction {
 ## 🔄 Error Handling
 
 ### Retry Configuration
+
 ```json
 {
   "stepId": "api-call",
@@ -288,6 +305,7 @@ class SaveAction extends GenericAction {
 ```
 
 ### Fallback Routes
+
 ```json
 {
   "fallbackMap": {
@@ -297,6 +315,7 @@ class SaveAction extends GenericAction {
 ```
 
 ### Error Handler
+
 ```json
 {
   "errorHandler": "error-logger",
@@ -305,6 +324,7 @@ class SaveAction extends GenericAction {
 ```
 
 ### In Action
+
 ```typescript
 try {
   const result = await riskyOperation();
@@ -312,7 +332,7 @@ try {
 } catch (error) {
   return this.createErrorResult(
     error as Error,
-    true // retryable
+    true, // retryable
   );
 }
 ```
@@ -320,6 +340,7 @@ try {
 ## 📈 State Management
 
 ### Access Workflow State
+
 ```typescript
 const workflowId = input.context.workflowId;
 const userId = input.context.userId;
@@ -329,11 +350,13 @@ const sharedState = input.context.sharedState;
 ```
 
 ### Update Shared State
+
 ```typescript
-input.context.sharedState.myKey = 'myValue';
+input.context.sharedState.myKey = "myValue";
 ```
 
 ### Access History
+
 ```typescript
 const history = state.history;
 const lastEntry = history[history.length - 1];
@@ -342,29 +365,31 @@ const lastEntry = history[history.length - 1];
 ## 🔍 Debugging
 
 ### Enable Logging
+
 ```typescript
 const runner = new WorkflowRunner({
   actionRegistry,
   dataClient,
   logger: {
-    info: (msg, meta) => console.log('[INFO]', msg, meta),
-    warn: (msg, meta) => console.warn('[WARN]', msg, meta),
-    error: (msg, meta) => console.error('[ERROR]', msg, meta),
-  }
+    info: (msg, meta) => console.log("[INFO]", msg, meta),
+    warn: (msg, meta) => console.warn("[WARN]", msg, meta),
+    error: (msg, meta) => console.error("[ERROR]", msg, meta),
+  },
 });
 ```
 
 ### Check Execution Results
+
 ```typescript
 const result = await runner.execute(workflow, { input: {} });
 
-console.log('Success:', result.success);
-console.log('Status:', result.state.status);
-console.log('Steps executed:', result.metadata.stepsExecuted);
-console.log('Duration:', result.metadata.durationMs);
-console.log('Retries:', result.metadata.retriesPerformed);
-console.log('Outputs:', result.state.context.outputs);
-console.log('History:', result.state.history);
+console.log("Success:", result.success);
+console.log("Status:", result.state.status);
+console.log("Steps executed:", result.metadata.stepsExecuted);
+console.log("Duration:", result.metadata.durationMs);
+console.log("Retries:", result.metadata.retriesPerformed);
+console.log("Outputs:", result.state.context.outputs);
+console.log("History:", result.state.history);
 ```
 
 ## 🌐 Environment Variables
@@ -383,6 +408,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ## 📚 Type Definitions
 
 ### WorkflowDefinition
+
 ```typescript
 interface WorkflowDefinition {
   id: string;
@@ -397,6 +423,7 @@ interface WorkflowDefinition {
 ```
 
 ### WorkflowStep
+
 ```typescript
 interface WorkflowStep {
   stepId: string;
@@ -411,6 +438,7 @@ interface WorkflowStep {
 ```
 
 ### ActionInput
+
 ```typescript
 interface ActionInput<TData = Record<string, unknown>> {
   context: WorkflowContext<TData>;
@@ -421,6 +449,7 @@ interface ActionInput<TData = Record<string, unknown>> {
 ```
 
 ### StepExecutionResult
+
 ```typescript
 interface StepExecutionResult {
   success: boolean;
@@ -458,12 +487,14 @@ interface StepExecutionResult {
 ## 💡 Common Issues
 
 ### "Action not found"
+
 ```typescript
 // Solution: Register the action
 actionRegistry.register(new MyAction({ dataClient, aiProvider }));
 ```
 
 ### "Previous step output not found"
+
 ```typescript
 // Solution: Check dependencies
 {
@@ -473,18 +504,20 @@ actionRegistry.register(new MyAction({ dataClient, aiProvider }));
 ```
 
 ### "DataClient not configured"
+
 ```typescript
 // Solution: Pass dataClient to action
-new MyAction({ dataClient, aiProvider })
+new MyAction({ dataClient, aiProvider });
 ```
 
 ### "Workflow timeout"
+
 ```typescript
 // Solution: Increase timeout
 const runner = new WorkflowRunner({
   actionRegistry,
   dataClient,
-  maxExecutionTime: 600000 // 10 minutes
+  maxExecutionTime: 600000, // 10 minutes
 });
 ```
 

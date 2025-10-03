@@ -196,9 +196,7 @@ describe("brand identity end-to-end integration", () => {
     expect(writingSummary.tierUsed).toBeDefined();
 
     const summariesTable = supabase.getTable("brand_summaries");
-    const persisted = summariesTable.find(
-      (row) => row.user_id === "internal-user-1",
-    );
+    const persisted = summariesTable.find((row) => row.user_id === "internal-user-1");
     expect(persisted).toBeDefined();
     expect(persisted?.visual_style_summary).toContain("Minimal dashboards");
 
@@ -242,12 +240,8 @@ describe("brand identity end-to-end integration", () => {
     expect(betaSummary.summary).toContain("Beta playbook");
 
     const summariesTable = supabase.getTable("brand_summaries");
-    const alphaRows = summariesTable.filter(
-      (row) => row.user_id === "internal-user-1",
-    );
-    const betaRows = summariesTable.filter(
-      (row) => row.user_id === "internal-user-2",
-    );
+    const alphaRows = summariesTable.filter((row) => row.user_id === "internal-user-1");
+    const betaRows = summariesTable.filter((row) => row.user_id === "internal-user-2");
 
     expect(alphaRows).toHaveLength(1);
     expect(betaRows).toHaveLength(1);
@@ -257,10 +251,7 @@ describe("brand identity end-to-end integration", () => {
 
   it("returns gating errors when distributions are invalid", async () => {
     supabase.setCurrentUser({ id: "auth-user-1", email: "alpha@example.com" });
-    await supabase
-      .from("brand_content_types")
-      .delete()
-      .eq("user_id", "auth-user-1");
+    await supabase.from("brand_content_types").delete().eq("user_id", "auth-user-1");
 
     supabase.from("brand_content_types").insert([
       {
@@ -290,8 +281,6 @@ describe("brand identity end-to-end integration", () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toBe("Distribution invalid");
-    expect(result.issues).toContain(
-      "Very important items cannot exceed 40% of the total.",
-    );
+    expect(result.issues).toContain("Very important items cannot exceed 40% of the total.");
   });
 });

@@ -2,19 +2,19 @@
  * Zod Schemas for Workflow Types
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 
 export const WorkflowStatusSchema = z.enum([
-  'pending',
-  'in_progress',
-  'pending_human_review',
-  'success',
-  'failed',
-  'timed_out',
-  'retrying',
-  'paused',
-  'canceled',
-  'validation_failed',
+  "pending",
+  "in_progress",
+  "pending_human_review",
+  "success",
+  "failed",
+  "timed_out",
+  "retrying",
+  "paused",
+  "canceled",
+  "validation_failed",
 ]);
 
 export const WorkflowStepSchema = z.object({

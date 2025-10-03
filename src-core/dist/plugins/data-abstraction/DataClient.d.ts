@@ -9,7 +9,9 @@ export declare abstract class DataClient implements IDataClient {
     executeQuery?<T = unknown>(query: unknown): Promise<DataResult<T>>;
     protected createSuccessResult<T>(data: T, metadata?: Record<string, unknown>): DataResult<T>;
     protected createErrorResult<T = unknown>(error: Error | unknown, code?: string): DataResult<T>;
+    protected validateIdentifier(identifier: string, type: string): void;
     protected validateTableName(table: string): void;
+    protected validateColumnName(column: string): void;
     protected validateId(id: string | number): void;
     protected buildFilters(query?: DataQuery): Record<string, unknown>;
     protected applyPagination(query?: DataQuery): {
@@ -31,6 +33,6 @@ export declare class MockDataClient extends DataClient {
     isConnected(): Promise<boolean>;
     private generateId;
     clear(): void;
-    seed(table: string, records: any[]): void;
+    seed(table: string, records: Array<Record<string, unknown>>): void;
 }
 //# sourceMappingURL=DataClient.d.ts.map

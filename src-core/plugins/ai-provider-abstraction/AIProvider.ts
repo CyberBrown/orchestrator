@@ -22,9 +22,7 @@ export abstract class AIProvider implements IAIProvider {
   /**
    * Generate content using the AI provider
    */
-  abstract generateContent(
-    request: AIProviderRequest,
-  ): Promise<AIProviderResponse>;
+  abstract generateContent(request: AIProviderRequest): Promise<AIProviderResponse>;
 
   /**
    * Check if the provider is available and properly configured
@@ -65,10 +63,7 @@ export abstract class AIProvider implements IAIProvider {
   /**
    * Create a standardized error response
    */
-  protected createErrorResponse(
-    error: Error | unknown,
-    modelId?: string,
-  ): AIProviderResponse {
+  protected createErrorResponse(error: Error | unknown, modelId?: string): AIProviderResponse {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     return {
@@ -198,26 +193,19 @@ export class MockAIProvider extends AIProvider {
    * If a response has been seeded for the exact prompt, it will be returned.
    * Otherwise, it returns a default mock response.
    */
-  async generateContent(
-    request: AIProviderRequest,
-  ): Promise<AIProviderResponse> {
+  async generateContent(request: AIProviderRequest): Promise<AIProviderResponse> {
     try {
       this.validateRequest(request);
 
-      const content =
-        this.seededResponses.get(request.prompt) ?? this.defaultResponse;
+      const content = this.seededResponses.get(request.prompt) ?? this.defaultResponse;
 
-      return this.createSuccessResponse(
-        content,
-        request.modelId ?? this.getDefaultModel(),
-        {
-          promptTokens: request.prompt.length,
-          completionTokens: content.length,
-          totalTokens: request.prompt.length + content.length,
-        },
-      );
+      return this.createSuccessResponse(content, request.modelId ?? this.getDefaultModel(), {
+        promptTokens: request.prompt.length,
+        completionTokens: content.length,
+        totalTokens: request.prompt.length + content.length,
+      });
     } catch (error) {
-      return this.createErrorResult(error, request.modelId);
+      return this.createErrorResponse(error, request.modelId);
     }
   }
 
@@ -253,4 +241,3 @@ export class MockAIProvider extends AIProvider {
     this.defaultResponse = "This is a mock AI response.";
   }
 }
-

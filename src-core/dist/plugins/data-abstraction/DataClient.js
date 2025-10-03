@@ -20,13 +20,19 @@ class DataClient {
             },
         };
     }
+    validateIdentifier(identifier, type) {
+        if (!identifier || identifier.trim().length === 0) {
+            throw new Error(`${type} name is required`);
+        }
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(identifier)) {
+            throw new Error(`Invalid ${type} name. Only alphanumeric characters and underscores are allowed, and it cannot start with a number.`);
+        }
+    }
     validateTableName(table) {
-        if (!table || table.trim().length === 0) {
-            throw new Error("Table name is required");
-        }
-        if (!/^[a-zA-Z0-9_]+$/.test(table)) {
-            throw new Error("Invalid table name. Only alphanumeric characters and underscores are allowed.");
-        }
+        this.validateIdentifier(table, "Table");
+    }
+    validateColumnName(column) {
+        this.validateIdentifier(column, "Column");
     }
     validateId(id) {
         if (id === null || id === undefined) {
@@ -69,7 +75,8 @@ class MockDataClient extends DataClient {
             if (query?.filters) {
                 results = results.filter((item) => {
                     return Object.entries(query.filters).every(([key, value]) => {
-                        return item[key] === value;
+                        const rec = item;
+                        return rec[key] === value;
                     });
                 });
             }
@@ -128,8 +135,9 @@ class MockDataClient extends DataClient {
             const records = isArray ? data : [data];
             const results = [];
             for (const record of records) {
-                const id = record.id ?? this.generateId();
-                const fullRecord = { ...record, id };
+                const rec = record;
+                const id = rec.id ?? this.generateId();
+                const fullRecord = { ...rec, id };
                 tableData.set(id, fullRecord);
                 results.push(fullRecord);
             }

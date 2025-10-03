@@ -6,13 +6,13 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "prebuild": "npm run lint && npm run format:check",
+    "prebuild": "pnpm run lint && pnpm run format:check",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint . --ext .ts,.tsx,.mts",
-    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
-    "prepublishOnly": "npm run build"
+    "lint": "eslint . --ext .ts,.tsx,.mts --config ../eslint.config.mts",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\" --config ../prettier.config.cjs",
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\" --config ../prettier.config.cjs",
+    "prepublishOnly": "pnpm run build"
   },
   "keywords": [
     "llm",
@@ -43,7 +43,9 @@
     "typescript": "^5.3.0",
     "vitest": "^1.0.0",
     "eslint": "^9.0.0",
-    "prettier": "^3.3.0",
+    "prettier": "^3.3.0"
+  },
+  "dependencies": {
     "zod": "^3.23.8"
   },
   "optionalDependencies": {

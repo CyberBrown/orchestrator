@@ -3,7 +3,4 @@
  */
 
 export { DataClient, MockDataClient } from "./DataClient";
-export {
-  SupabaseClientAdapter,
-  type SupabaseConfig,
-} from "./SupabaseClientAdapter";
+export { SupabaseClientAdapter, type SupabaseConfig } from "./SupabaseClientAdapter";

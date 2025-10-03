@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SupabaseClientAdapter = void 0;
+const supabase_js_1 = require("@supabase/supabase-js");
 const DataClient_1 = require("./DataClient");
 class SupabaseClientAdapter extends DataClient_1.DataClient {
     constructor(config) {
@@ -9,24 +10,22 @@ class SupabaseClientAdapter extends DataClient_1.DataClient {
         this.initializeClient();
     }
     initializeClient() {
-        this.client = null;
+        this.client = (0, supabase_js_1.createClient)(this.config.url, this.config.serviceRoleKey || this.config.anonKey);
     }
     async fetch(table, query) {
         try {
             this.validateTableName(table);
-            if (!this.client) {
-                throw new Error("Supabase client not initialized");
-            }
-            let supabaseQuery = this.client
-                .from(table)
-                .select(query?.select?.join(",") ?? "*");
+            const selectQuery = query?.select?.join(",") ?? "*";
+            let supabaseQuery = this.client.from(table).select(selectQuery);
             if (query?.filters) {
                 Object.entries(query.filters).forEach(([key, value]) => {
+                    this.validateColumnName(key);
                     supabaseQuery = supabaseQuery.eq(key, value);
                 });
             }
             if (query?.orderBy && query.orderBy.length > 0) {
                 query.orderBy.forEach((sort) => {
+                    this.validateColumnName(sort.field);
                     supabaseQuery = supabaseQuery.order(sort.field, {
                         ascending: sort.direction === "asc",
                     });
@@ -55,14 +54,7 @@ class SupabaseClientAdapter extends DataClient_1.DataClient {
         try {
             this.validateTableName(table);
             this.validateId(id);
-            if (!this.client) {
-                throw new Error("Supabase client not initialized");
-            }
-            const { data, error } = await this.client
-                .from(table)
-                .select("*")
-                .eq("id", id)
-                .single();
+            const { data, error } = await this.client.from(table).select("*").eq("id", id).single();
             if (error) {
                 return this.createErrorResult(error, error.code);
             }
@@ -78,13 +70,7 @@ class SupabaseClientAdapter extends DataClient_1.DataClient {
     async insert(table, data) {
         try {
             this.validateTableName(table);
-            if (!this.client) {
-                throw new Error("Supabase client not initialized");
-            }
-            const { data: insertedData, error } = await this.client
-                .from(table)
-                .insert(data)
-                .select();
+            const { data: insertedData, error } = await this.client.from(table).insert(data).select();
             if (error) {
                 return this.createErrorResult(error, error.code);
             }
@@ -99,9 +85,6 @@ class SupabaseClientAdapter extends DataClient_1.DataClient {
         try {
             this.validateTableName(table);
             this.validateId(id);
-            if (!this.client) {
-                throw new Error("Supabase client not initialized");
-            }
             const { data: updatedData, error } = await this.client
                 .from(table)
                 .update(data)
@@ -121,9 +104,6 @@ class SupabaseClientAdapter extends DataClient_1.DataClient {
         try {
             this.validateTableName(table);
             this.validateId(id);
-            if (!this.client) {
-                throw new Error("Supabase client not initialized");
-            }
             const { error } = await this.client.from(table).delete().eq("id", id);
             if (error) {
                 return this.createErrorResult(error, error.code);
@@ -134,29 +114,29 @@ class SupabaseClientAdapter extends DataClient_1.DataClient {
             return this.createErrorResult(error);
         }
     }
-    async executeQuery(query) {
+    async executeQuery(_query) {
         try {
-            if (!this.client) {
-                throw new Error("Supabase client not initialized");
-            }
-            throw new Error("Custom query execution not implemented");
+            throw new Error("Custom query execution not implemented for security reasons.");
         }
-        catch (error) {
-            return this.createErrorResult(error);
+        catch (_e) {
+            return this.createErrorResult(_e);
         }
     }
     async isConnected() {
         try {
-            if (!this.client) {
-                return false;
-            }
             const { error } = await this.client
-                .from("_health_check")
-                .select("*")
+                .from("__health_check_table_that_does_not_exist__")
+                .select("id")
                 .limit(1);
-            return error?.code !== "PGRST301";
+            if (error && error.code === "42P01") {
+                return true;
+            }
+            if (!error) {
+                return true;
+            }
+            return false;
         }
-        catch {
+        catch (_e) {
             return false;
         }
     }
