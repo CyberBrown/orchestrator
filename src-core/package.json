@@ -41,7 +41,8 @@
     "typescript": "^5.3.0",
     "vitest": "^1.0.0",
     "eslint": "^8.0.0",
-    "prettier": "^3.0.0"
+    "prettier": "^3.0.0",
+    "zod": "^3.23.8"
   },
   "optionalDependencies": {
     "@google-cloud/vertexai": "^1.0.0",
