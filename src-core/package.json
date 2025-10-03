@@ -6,10 +6,12 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
+    "prebuild": "npm run lint && npm run format:check",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint . --ext .ts",
-    "format": "prettier --write &quot;**/*.ts&quot;",
+    "lint": "eslint . --ext .ts,.tsx,.mts",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -40,8 +42,8 @@
     "@types/node": "^20.0.0",
     "typescript": "^5.3.0",
     "vitest": "^1.0.0",
-    "eslint": "^8.0.0",
-    "prettier": "^3.0.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.3.0",
     "zod": "^3.23.8"
   },
   "optionalDependencies": {

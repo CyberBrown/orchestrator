@@ -6,13 +6,19 @@
   "scripts": {
     "prepare": "husky",
     "lint": "eslint .",
-    "format:check": "prettier . --check"
+    "lint:fix": "eslint . --fix",
+    "format:check": "prettier . --check",
+    "format": "prettier . --write",
+    "prebuild": "pnpm run lint && pnpm run format:check",
+    "build": "pnpm --filter @llm-orchestration/core run build"
   },
   "devDependencies": {
     "eslint": "^9.0.0",
+    "eslint-plugin-react": "^7.37.2",
     "eslint-config-prettier": "^9.0.0",
     "husky": "^9.0.0",
     "lint-staged": "^15.0.0",
-    "prettier": "^3.3.0"
+    "prettier": "^3.3.0",
+    "typescript-eslint": "^8.0.0"
   }
 }
