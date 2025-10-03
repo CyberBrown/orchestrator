@@ -5,6 +5,7 @@
  * Adapts the existing Supabase client code to work with the generalized framework.
  */
 
+import { createClient, SupabaseClient as SupabaseClientType } from '@supabase/supabase-js';
 import { DataClient } from "./DataClient";
 import type { DataQuery, DataResult } from "../../types/providers";
 
@@ -21,7 +22,7 @@ export interface SupabaseConfig {
  * Supabase Client Adapter
  */
 export class SupabaseClientAdapter extends DataClient {
-  private client: any; // Supabase client instance
+  private client: SupabaseClientType;
   private config: SupabaseConfig;
 
   constructor(config: SupabaseConfig) {
@@ -34,12 +35,7 @@ export class SupabaseClientAdapter extends DataClient {
    * Initialize Supabase client
    */
   private initializeClient(): void {
-    // In a real implementation, this would initialize the actual Supabase client
-    // Example:
-    // import { createClient } from '@supabase/supabase-js';
-    // this.client = createClient(this.config.url, this.config.anonKey);
-
-    this.client = null; // Placeholder
+    this.client = createClient(this.config.url, this.config.serviceRoleKey || this.config.anonKey);
   }
 
   /**
@@ -52,18 +48,18 @@ export class SupabaseClientAdapter extends DataClient {
     try {
       this.validateTableName(table);
 
-      if (!this.client) {
-        throw new Error("Supabase client not initialized");
-      }
+      // The select string is complex and allows for features like resource embedding.
+      // It's sanitized by PostgREST, but should be constructed carefully by the calling action.
+      const selectQuery = query?.select?.join(",") ?? "*";
 
-      // Build Supabase query
       let supabaseQuery = this.client
         .from(table)
-        .select(query?.select?.join(",") ?? "*");
+        .select(selectQuery);
 
       // Apply filters
       if (query?.filters) {
         Object.entries(query.filters).forEach(([key, value]) => {
+          this.validateColumnName(key);
           supabaseQuery = supabaseQuery.eq(key, value);
         });
       }
@@ -71,6 +67,7 @@ export class SupabaseClientAdapter extends DataClient {
       // Apply sorting
       if (query?.orderBy && query.orderBy.length > 0) {
         query.orderBy.forEach((sort) => {
+          this.validateColumnName(sort.field);
           supabaseQuery = supabaseQuery.order(sort.field, {
             ascending: sort.direction === "asc",
           });
@@ -115,10 +112,6 @@ export class SupabaseClientAdapter extends DataClient {
       this.validateTableName(table);
       this.validateId(id);
 
-      if (!this.client) {
-        throw new Error("Supabase client not initialized");
-      }
-
       const { data, error } = await this.client
         .from(table)
         .select("*")
@@ -152,10 +145,6 @@ export class SupabaseClientAdapter extends DataClient {
     try {
       this.validateTableName(table);
 
-      if (!this.client) {
-        throw new Error("Supabase client not initialized");
-      }
-
       const { data: insertedData, error } = await this.client
         .from(table)
         .insert(data)
@@ -184,10 +173,6 @@ export class SupabaseClientAdapter extends DataClient {
       this.validateTableName(table);
       this.validateId(id);
 
-      if (!this.client) {
-        throw new Error("Supabase client not initialized");
-      }
-
       const { data: updatedData, error } = await this.client
         .from(table)
         .update(data)
@@ -213,10 +198,6 @@ export class SupabaseClientAdapter extends DataClient {
       this.validateTableName(table);
       this.validateId(id);
 
-      if (!this.client) {
-        throw new Error("Supabase client not initialized");
-      }
-
       const { error } = await this.client.from(table).delete().eq("id", id);
 
       if (error) {
@@ -234,16 +215,18 @@ export class SupabaseClientAdapter extends DataClient {
    */
   async executeQuery<T = unknown>(query: unknown): Promise<DataResult<T>> {
     try {
-      if (!this.client) {
-        throw new Error("Supabase client not initialized");
-      }
-
-      // Execute raw SQL or RPC call
-      // This would depend on the query format
+      // For security, raw query execution is disabled by default.
+      // To enable it, this method must be implemented carefully.
       // Example for RPC:
-      // const { data, error } = await this.client.rpc('function_name', params);
+      // if (typeof query === 'object' && query !== null && 'functionName' in query) {
+      //   const { functionName, params } = query as { functionName: string, params: any };
+      //   this.validateIdentifier(functionName, 'RPC function');
+      //   const { data, error } = await this.client.rpc(functionName, params);
+      //   if (error) return this.createErrorResult(error, error.code);
+      //   return this.createSuccessResult(data as T);
+      // }
 
-      throw new Error("Custom query execution not implemented");
+      throw new Error("Custom query execution not implemented for security reasons.");
     } catch (error) {
       return this.createErrorResult(error);
     }
@@ -254,19 +237,26 @@ export class SupabaseClientAdapter extends DataClient {
    */
   async isConnected(): Promise<boolean> {
     try {
-      if (!this.client) {
-        return false;
-      }
-
-      // Try a simple query to check connection
+      // The Supabase client doesn't have a direct connection check.
+      // We can infer connectivity by making a lightweight request.
       const { error } = await this.client
-        .from("_health_check")
-        .select("*")
+        .from('__health_check_table_that_does_not_exist__') // A non-existent table
+        .select("id")
         .limit(1);
 
-      // If table doesn't exist, that's okay - we're just checking connection
-      return error?.code !== "PGRST301"; // Not a connection error
-    } catch {
+      // If we get a 'relation does not exist' error, the connection is fine.
+      if (error && error.code === '42P01') {
+        return true;
+      }
+      
+      // If there's no error, it's also fine (though unlikely).
+      if (!error) {
+        return true;
+      }
+
+      // Any other error suggests a connection problem.
+      return false;
+    } catch (e) {
       return false;
     }
   }

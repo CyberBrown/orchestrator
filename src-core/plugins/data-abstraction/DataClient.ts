@@ -100,19 +100,33 @@ export abstract class DataClient implements IDataClient {
   }
 
   /**
+   * Validate an identifier (table or column name)
+   */
+  protected validateIdentifier(identifier: string, type: string): void {
+    if (!identifier || identifier.trim().length === 0) {
+      throw new Error(`${type} name is required`);
+    }
+
+    // Stricter regex for SQL identifiers
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(identifier)) {
+      throw new Error(
+        `Invalid ${type} name. Only alphanumeric characters and underscores are allowed, and it cannot start with a number.`,
+      );
+    }
+  }
+
+  /**
    * Validate table name
    */
   protected validateTableName(table: string): void {
-    if (!table || table.trim().length === 0) {
-      throw new Error("Table name is required");
-    }
+    this.validateIdentifier(table, 'Table');
+  }
 
-    // Basic SQL injection prevention
-    if (!/^[a-zA-Z0-9_]+$/.test(table)) {
-      throw new Error(
-        "Invalid table name. Only alphanumeric characters and underscores are allowed.",
-      );
-    }
+  /**
+   * Validate column name
+   */
+  protected validateColumnName(column: string): void {
+    this.validateIdentifier(column, 'Column');
   }
 
   /**
