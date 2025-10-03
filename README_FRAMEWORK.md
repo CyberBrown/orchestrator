@@ -66,10 +66,10 @@ src-core/
 
 ```bash
 # Install dependencies (from project root)
-npm install
+pnpm install
 
 # Run integration tests
-npm test tests/core-flow.test.ts
+pnpm test
 ```
 
 ### 4. Try the Example
@@ -253,12 +253,14 @@ class CustomAction extends GenericAction {
 
 ## 🌟 Highlights
 
-- **Zero Business Logic**: 100% generic and reusable
-- **Type Safety**: Full TypeScript with generics
-- **Mock-First**: Testing built into design
-- **Well-Documented**: 4,000+ lines of documentation
-- **Production-Ready**: Comprehensive error handling
-- **Extensible**: Easy to add new capabilities
+- **Parallel Execution**: Automatically runs independent workflow steps concurrently for improved performance.
+- **Robust Validation**: Uses Zod for rigorous schema-based validation of workflows and action inputs.
+- **Secure by Design**: Features hardened data adapters and parameterized queries to prevent vulnerabilities like SQL injection.
+- **Zero Business Logic**: 100% generic and reusable for any domain.
+- **Type Safety**: Full TypeScript with generics for a better developer experience.
+- **Mock-First**: Includes mock implementations for both AI and Data providers for comprehensive testing.
+- **Production-Ready**: Comprehensive error handling and retry logic.
+- **Extensible**: Easy to add new capabilities, actions, and providers.
 
 ## 📞 Getting Help
 

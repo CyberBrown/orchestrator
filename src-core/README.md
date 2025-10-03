@@ -269,6 +269,55 @@ class MongoDBAdapter extends DataClient {
 }
 ```
 
+## Using the Included Adapters
+
+The framework comes with ready-to-use adapters for popular services. To use them, you need to install the corresponding optional dependencies and configure them with the correct environment variables.
+
+### Supabase (`SupabaseClientAdapter`)
+
+The `SupabaseClientAdapter` allows you to connect to a Supabase project for data persistence.
+
+**1. Installation:**
+
+Install the Supabase client library in your project:
+
+```bash
+pnpm add @supabase/supabase-js
+```
+
+**2. Configuration:**
+
+Set the following environment variables:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+# For admin-level access from the backend, also set:
+# SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+### Vertex AI (`VertexAIAdapter`)
+
+The `VertexAIAdapter` connects to Google Cloud's Vertex AI for generative AI capabilities.
+
+**1. Installation:**
+
+Install the Google Cloud Vertex AI library:
+
+```bash
+pnpm add @google-cloud/vertexai
+```
+
+**2. Configuration:**
+
+Set the following environment variables for authentication:
+
+```bash
+GCP_PROJECT_ID=your-gcp-project-id
+GCP_LOCATION=us-central1
+# Ensure you have authenticated with gcloud CLI or have a service account key configured.
+```
+
 ## 🧪 Testing
 
 The framework includes mock implementations for testing:
