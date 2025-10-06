@@ -7,6 +7,7 @@ We welcome contributions from the community! Please read this guide to learn how
 To get started, you'll need to clone the repository and install the dependencies.
 
 1.  **Clone the repository:**
+
     ```bash
     git clone https://github.com/your-org/llm-orchestration-framework.git
     cd llm-orchestration-framework
@@ -35,6 +36,7 @@ Please make sure that all tests pass before submitting a pull request.
     Click the "Fork" button at the top right of the repository page.
 
 2.  **Create a new branch:**
+
     ```bash
     git checkout -b my-feature-branch
     ```
@@ -43,12 +45,15 @@ Please make sure that all tests pass before submitting a pull request.
     Implement your feature or bug fix.
 
 4.  **Commit your changes:**
+
     ```bash
     git commit -m "feat: add my new feature"
     ```
+
     Please follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification for your commit messages.
 
 5.  **Push your changes to your fork:**
+
     ```bash
     git push origin my-feature-branch
     ```

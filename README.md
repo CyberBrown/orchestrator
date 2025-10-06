@@ -103,11 +103,7 @@ Create a workflow configuration file (`my-workflow.json`):
 ### 3. Create Custom Actions
 
 ```typescript
-import {
-  GenericAction,
-  type ActionInput,
-  type StepExecutionResult,
-} from "@llm-orchestration/core";
+import { GenericAction, type ActionInput, type StepExecutionResult } from "@llm-orchestration/core";
 
 class ContentGenerationAction extends GenericAction {
   readonly id = "ai-generation";
