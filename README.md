@@ -54,7 +54,7 @@ src-core/
 
 ```bash
 # Install the framework (when published)
-npm install @your-org/llm-orchestration-framework
+npm install @llm-orchestration/core
 
 # Or use locally
 npm link
@@ -107,7 +107,7 @@ import {
   GenericAction,
   type ActionInput,
   type StepExecutionResult,
-} from "@your-org/llm-orchestration-framework";
+} from "@llm-orchestration/core";
 
 class ContentGenerationAction extends GenericAction {
   readonly id = "ai-generation";
@@ -141,7 +141,7 @@ import {
   VertexAIAdapter,
   SupabaseClientAdapter,
   loadWorkflow,
-} from "@your-org/llm-orchestration-framework";
+} from "@llm-orchestration/core";
 
 // Setup
 const actionRegistry = new ActionRegistry();
@@ -229,7 +229,7 @@ The framework automatically manages workflow state:
 Implement the `AIProvider` interface to add new AI providers:
 
 ```typescript
-import { AIProvider } from "@your-org/llm-orchestration-framework";
+import { AIProvider } from "@llm-orchestration/core";
 
 class OpenAIAdapter extends AIProvider {
   readonly name = "openai";
@@ -250,7 +250,7 @@ class OpenAIAdapter extends AIProvider {
 Implement the `DataClient` interface for custom data sources:
 
 ```typescript
-import { DataClient } from "@your-org/llm-orchestration-framework";
+import { DataClient } from "@llm-orchestration/core";
 
 class MongoDBAdapter extends DataClient {
   async fetch<T>(table: string, query?: DataQuery): Promise<DataResult<T[]>> {
@@ -286,10 +286,10 @@ pnpm add @supabase/supabase-js
 Set the following environment variables:
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_SUPABASE_URL=https://<YOUR_SUPABASE_PROJECT_ID>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<YOUR_SUPABASE_ANON_KEY>
 # For admin-level access from the backend, also set:
-# SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+# SUPABASE_SERVICE_ROLE_KEY=<YOUR_SUPABASE_SERVICE_ROLE_KEY>
 ```
 
 ### Vertex AI (`VertexAIAdapter`)
@@ -309,17 +309,17 @@ pnpm add @google-cloud/vertexai
 Set the following environment variables for authentication:
 
 ```bash
-GCP_PROJECT_ID=your-gcp-project-id
+GCP_PROJECT_ID=<YOUR_GCP_PROJECT_ID>
 GCP_LOCATION=us-central1
 # Ensure you have authenticated with gcloud CLI or have a service account key configured.
 ```
 
 ## 🧪 Testing
 
-The framework includes mock implementations for testing:
+The framework includes mock implementations for testing. Once tests are added, you will be able to run them using `pnpm test` from the `src-core` directory.
 
 ```typescript
-import { MockDataClient, ActionRegistry } from "@your-org/llm-orchestration-framework";
+import { MockDataClient, ActionRegistry } from "@llm-orchestration/core";
 
 describe("My Workflow", () => {
   it("should execute successfully", async () => {
@@ -382,18 +382,18 @@ The framework provides multiple error handling mechanisms:
 
 ```bash
 # AI Provider (Vertex AI)
-GCP_PROJECT_ID=your-project-id
+GCP_PROJECT_ID=<YOUR_GCP_PROJECT_ID>
 GCP_LOCATION=us-central1
 VERTEX_DEFAULT_MODEL=gemini-1.5-pro
 
 # Data Client (Supabase)
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_SUPABASE_URL=https://<YOUR_SUPABASE_PROJECT_ID>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<YOUR_SUPABASE_ANON_KEY>
 ```
 
 ### Workflow Configuration
 
-See `config/workflow-schema.json` for the complete schema.
+See `src-core/config/workflow-schema.json` for the complete schema.
 
 ## 📚 API Reference
 
@@ -414,11 +414,9 @@ See `config/workflow-schema.json` for the complete schema.
 
 ## 🎓 Examples
 
-See the `tests/` directory for complete examples:
+Examples will be added to the `src-core/tests` directory in the future.
 
-- `core-flow.test.ts`: Basic 3-step workflow
-- Integration tests with mock providers
-- Custom action implementations
+**Note:** The `tests` directory at the root of this project contains integration tests for a separate, internal application and not for the core framework.
 
 ## 🤝 Contributing
 
@@ -452,10 +450,3 @@ To extend the framework:
 ## 📄 License
 
 MIT License - See LICENSE file for details
-
-## 🔗 Related Documentation
-
-- [Architecture Overview](./docs/architecture.md)
-- [Migration Guide](./docs/migration.md)
-- [API Reference](./docs/api-reference.md)
-- [Examples](./docs/examples.md)
