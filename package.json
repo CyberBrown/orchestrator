@@ -1,10 +1,9 @@
 {
-  "name": "orchestrator",
+  "name": "@llm-orchestration/root",
   "private": true,
   "version": "0.0.0",
   "description": "Workspace root for orchestrator monorepo",
   "scripts": {
-    "prepare": "husky",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format:check": "prettier . --config prettier.config.cjs --check",
@@ -14,10 +13,9 @@
   },
   "devDependencies": {
     "eslint": "^9.0.0",
-    "eslint-plugin-react": "^7.37.2",
     "eslint-config-prettier": "^9.0.0",
-    "husky": "^9.0.0",
-    "lint-staged": "^15.0.0",
+    "eslint-plugin-react": "^7.37.2",
+    "jiti": "^2.6.1",
     "prettier": "^3.3.0",
     "typescript-eslint": "^8.0.0"
   }

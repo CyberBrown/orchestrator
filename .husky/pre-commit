@@ -1,6 +1,0 @@
-#!/usr/bin/env sh
-. "$(dirname "$0")/_/husky.sh"
-
-echo "Running lint-staged (ESLint then Prettier) on staged files..."
-REPO_ROOT=$(git rev-parse --show-toplevel)
-pnpm exec lint-staged --cwd "$REPO_ROOT" --config "$REPO_ROOT/lint-staged.config.js"

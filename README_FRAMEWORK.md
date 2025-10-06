@@ -330,17 +330,16 @@ _Built with ❤️ for the AI development community_
 
 ## 🧹 Linting & Formatting
 
-This repository enforces code quality at both commit-time and build-time to keep the SDK consistent and consumer-friendly.
+This repository enforces code quality at build-time to keep the SDK consistent and consumer-friendly.
 
-- Commit-time: Husky runs lint-staged, which executes ESLint first, then Prettier on staged files. Commits are blocked on failures.
 - Build-time: The root `prebuild` script runs `eslint` then `prettier --check` before compiling. Fails fast on issues.
+- Manual checks: Run the lint/format commands locally before pushing to avoid CI failures.
 
 Tooling and configs:
 
 - ESLint flat config: `eslint.config.mts` (with `eslint-config-prettier` at the end to avoid conflicts with Prettier)
 - Prettier config: `prettier.config.cjs` (canonical; CLI forced to use this config)
-- Pre-commit hook: `.husky/pre-commit`
-- Staged file runner: `lint-staged.config.js`
+- Optional staged file runner: `lint-staged.config.js` (install lint-staged locally if you want to use it manually)
 
 Rule policy tailored for a plugin/SDK:
 
