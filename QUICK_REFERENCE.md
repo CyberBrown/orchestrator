@@ -523,5 +523,5 @@ const runner = new WorkflowRunner({
 
 ---
 
-**Quick Reference Version**: 1.0.0  
+**Quick Reference Version**: 1.0.0
 **Last Updated**: 2025-01-03

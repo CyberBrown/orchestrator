@@ -13,7 +13,6 @@ import type {
   WorkflowStatus,
   WorkflowHistoryEntry,
   StepExecutionResult,
-  WorkflowStep,
 } from "../types/workflow";
 import type { ActionRegistry } from "../types/action";
 import type { DataClient } from "../types/providers";

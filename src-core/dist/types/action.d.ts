@@ -5,7 +5,7 @@ export interface ActionInput<TData = Record<string, unknown>> {
     instructions?: string;
     metadata?: Record<string, unknown>;
 }
-export interface Action<TInput = Record<string, unknown>, TOutput = unknown> {
+export interface Action<TInput = Record<string, unknown>, _TOutput = unknown> {
     readonly id: string;
     readonly name: string;
     readonly description?: string;
