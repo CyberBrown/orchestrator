@@ -27,14 +27,9 @@
   ],
   "author": "Your Organization",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/your-org/llm-orchestration-framework.git"
+  "publishConfig": {
+    "access": "public"
   },
-  "bugs": {
-    "url": "https://github.com/your-org/llm-orchestration-framework/issues"
-  },
-  "homepage": "https://github.com/your-org/llm-orchestration-framework#readme",
   "peerDependencies": {
     "typescript": "^5.0.0"
   },

@@ -27,7 +27,7 @@ export interface ActionInput<TData = Record<string, unknown>> {
 /**
  * Base interface that all actions must implement
  */
-export interface Action<TInput = Record<string, unknown>, TOutput = unknown> {
+export interface Action<TInput = Record<string, unknown>, _TOutput = unknown> {
   /** Unique identifier for this action */
   readonly id: string;
 

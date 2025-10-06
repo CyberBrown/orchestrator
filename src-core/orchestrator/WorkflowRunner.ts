@@ -10,7 +10,6 @@ import type {
   WorkflowState,
   WorkflowContext,
   WorkflowExecutionConfig,
-  StepExecutionResult,
 } from "../types/workflow";
 import type { DataClient } from "../types/providers";
 import { Orchestrator, type OrchestratorOptions } from "./Orchestrator";
