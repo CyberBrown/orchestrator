@@ -1,6 +1,6 @@
 {
   "name": "@llm-orchestration/core",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Generalized LLM Orchestration Framework - A modular, configuration-driven framework for building multi-step AI workflows",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -25,7 +25,7 @@
     "openai",
     "supabase"
   ],
-  "author": "Your Organization",
+  "author": "CyberBrown",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
